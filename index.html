@@ -323,7 +323,7 @@
 
     <script>
         // ⚠️ REPLACE WITH YOUR GOOGLE MAPS API KEY
-        const API_KEY = 'YOUR_API_KEY_HERE';
+        const API_KEY = 'AIzaSyBD5iVr11BID7B1477W8W2tlfi0O0ac1KQ';
 
         function extractCoordinates(input) {
             input = input.trim();
@@ -376,7 +376,7 @@
         }
 
         async function calculateRoutes() {
-            if (API_KEY === 'AIzaSyBD5iVr11BID7B1477W8W2tlfi0O0ac1KQ') {
+            if (API_KEY === 'YOUR_API_KEY_HERE') {
                 showError('Please add your Google Maps API key in the code!');
                 return;
             }
@@ -518,10 +518,7 @@
                         <div class="departure-time">🏠 ${departureTime}</div>
                     </div>
                     <div class="route-details">
-                        <div><strong>🏠 Leave Home:</strong> ${departureTime}</div>
                         <div><strong>🏢 Arrive ${workplaceName}:</strong> ${companyArrivalTime}</div>
-                        <div><strong>🕐 Travel Time:</strong> ${leg.duration.text}</div>
-                        <div><strong>✈️ Flight Time:</strong> ${flightTime}</div>
                     </div>
                     ${stepsHTML}
                 `;
