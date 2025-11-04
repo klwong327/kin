@@ -401,7 +401,7 @@
             flightTime.setHours(flightHours, flightMinutes, 0, 0);
             
             // Subtract buffer time based on location
-            const bufferMinutes = workplaceRadio.value === '22.298189,113.934747' ? 110 : 100; // 100min for CX City, 92min for Airport
+            const bufferMinutes = workplaceRadio.value === '22.298189,113.934747' ? 110 : 105; // 100min for CX City, 92min for Airport
             const desiredArrivalTime = new Date(flightTime.getTime() - (bufferMinutes * 60 * 1000));
 
             document.getElementById('loading').classList.add('show');
@@ -462,15 +462,17 @@
             let filteredRoutes = [];
             
             if (workplaceName.includes('CX City')) {
-                // For CX City: Find MTR route and direct bus route
+                // For CX City: Find MTR route and direct airport bus route (A or E series)
                 let mtrRoute = null;
-                let directBusRoute = null;
+                let airportBusRoute = null;
                 
                 routes.forEach(route => {
                     const leg = route.legs[0];
                     let hasMTR = false;
                     let hasBus = false;
                     let hasTransit = false;
+                    let hasAirportBus = false;
+                    let isDirectRoute = true;
                     
                     leg.steps.forEach(step => {
                         if (step.travel_mode === 'TRANSIT') {
@@ -481,23 +483,35 @@
                             } else if (vehicleType === 'BUS') {
                                 hasBus = true;
                                 if (hasMTR) hasTransit = true;
+                                
+                                // Check if bus route starts with A or E
+                                const busNumber = step.transit.line.short_name || step.transit.line.name;
+                                if (busNumber && (busNumber.startsWith('A') || busNumber.startsWith('E'))) {
+                                    hasAirportBus = true;
+                                }
                             }
                         }
                     });
+                    
+                    // Check if route is direct (only one transit step)
+                    const transitSteps = leg.steps.filter(step => step.travel_mode === 'TRANSIT');
+                    if (transitSteps.length > 1) {
+                        isDirectRoute = false;
+                    }
                     
                     // MTR route with bus transfer
                     if (hasMTR && hasTransit && !mtrRoute) {
                         mtrRoute = route;
                     }
-                    // Direct bus route (bus only, no MTR)
-                    else if (hasBus && !hasMTR && !directBusRoute) {
-                        directBusRoute = route;
+                    // Direct airport bus route (A or E series, no transfers)
+                    else if (hasAirportBus && isDirectRoute && !hasMTR && !airportBusRoute) {
+                        airportBusRoute = route;
                     }
                 });
                 
-                // Add MTR route first (priority), then direct bus
+                // Add MTR route first (priority), then direct airport bus
                 if (mtrRoute) filteredRoutes.push(mtrRoute);
-                if (directBusRoute) filteredRoutes.push(directBusRoute);
+                if (airportBusRoute) filteredRoutes.push(airportBusRoute);
                 
                 // If we don't have both, fill with other routes
                 if (filteredRoutes.length < 2) {
@@ -540,7 +554,7 @@
                     if (step.travel_mode === 'TRANSIT') {
                         const vehicleType = step.transit.line.vehicle.type;
                         if (vehicleType === 'HEAVY_RAIL' || vehicleType === 'SUBWAY' || vehicleType === 'METRO_RAIL') {
-                            primaryMode = 'Tung Chung MTR + Bus';
+                            primaryMode = 'MTR';
                         }
                     }
                 });
