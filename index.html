@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transit Time Calculator</title>
+    <style>
+        :root {
+            --color-cream-50: rgba(252, 252, 249, 1);
+            --color-cream-100: rgba(255, 255, 253, 1);
+            --color-gray-200: rgba(245, 245, 245, 1);
+            --color-gray-300: rgba(167, 169, 169, 1);
+            --color-slate-500: rgba(98, 108, 113, 1);
+            --color-brown-600: rgba(94, 82, 64, 1);
+            --color-charcoal-700: rgba(31, 33, 33, 1);
+            --color-charcoal-800: rgba(38, 40, 40, 1);
+            --color-slate-900: rgba(19, 52, 59, 1);
+            --color-teal-500: rgba(33, 128, 141, 1);
+            --color-teal-600: rgba(29, 116, 128, 1);
+            --color-teal-700: rgba(26, 104, 115, 1);
+            --color-red-500: rgba(192, 21, 47, 1);
+            --color-brown-600-rgb: 94, 82, 64;
+            --color-teal-500-rgb: 33, 128, 141;
+            --color-background: var(--color-cream-50);
+            --color-surface: var(--color-cream-100);
+            --color-text: var(--color-slate-900);
+            --color-text-secondary: var(--color-slate-500);
+            --color-primary: var(--color-teal-500);
+            --color-primary-hover: var(--color-teal-600);
+            --color-border: rgba(var(--color-brown-600-rgb), 0.2);
+            --color-card-border: rgba(var(--color-brown-600-rgb), 0.12);
+            --color-error: var(--color-red-500);
+            --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --radius-lg: 12px;
+            --radius-base: 8px;
+            --space-8: 8px;
+            --space-12: 12px;
+            --space-16: 16px;
+            --space-24: 24px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-gray-400-rgb: 119, 124, 124;
+                --color-gray-300-rgb: 167, 169, 169;
+                --color-background: var(--color-charcoal-700);
+                --color-surface: var(--color-charcoal-800);
+                --color-text: var(--color-gray-200);
+                --color-text-secondary: rgba(var(--color-gray-300-rgb), 0.7);
+                --color-border: rgba(var(--color-gray-400-rgb), 0.3);
+                --color-card-border: rgba(var(--color-gray-400-rgb), 0.2);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family-base);
+            background-color: var(--color-background);
+            color: var(--color-text);
+            padding: var(--space-24);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: var(--space-24);
+            color: var(--color-text);
+        }
+
+        .card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-card-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-24);
+            margin-bottom: var(--space-16);
+        }
+
+        .form-group {
+            margin-bottom: var(--space-16);
+        }
+
+        label {
+            display: block;
+            margin-bottom: var(--space-8);
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--color-text);
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: var(--space-12);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-base);
+            font-size: 14px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            font-family: var(--font-family-base);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .btn {
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            padding: var(--space-12) var(--space-24);
+            border-radius: var(--radius-base);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-top: 4px;
+        }
+
+        .error {
+            color: var(--color-error);
+            font-size: 14px;
+            margin-top: var(--space-8);
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .route-option {
+            background: var(--color-surface);
+            border: 1px solid var(--color-card-border);
+            border-radius: var(--radius-base);
+            padding: var(--space-16);
+            margin-bottom: var(--space-12);
+        }
+
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-12);
+        }
+
+        .route-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .departure-time {
+            background: var(--color-primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: var(--radius-base);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .route-details {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            margin-bottom: var(--space-8);
+        }
+
+        .route-steps {
+            margin-top: var(--space-12);
+            padding-top: var(--space-12);
+            border-top: 1px solid var(--color-border);
+        }
+
+        .step {
+            margin-bottom: var(--space-8);
+            font-size: 13px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .step::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: var(--color-primary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: var(--space-24);
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .api-key-warning {
+            background: rgba(var(--color-teal-500-rgb), 0.1);
+            border: 1px solid var(--color-primary);
+            border-radius: var(--radius-base);
+            padding: var(--space-16);
+            margin-bottom: var(--space-24);
+            font-size: 14px;
+        }
+
+        .api-key-warning strong {
+            display: block;
+            margin-bottom: var(--space-8);
+        }
+
+        .api-key-warning a {
+            color: var(--color-primary);
+            text-decoration: underline;
+        }
+
+        input[type="radio"]:checked + div {
+            color: var(--color-primary);
+        }
+
+        label:has(input[type="radio"]:checked) {
+            border-color: var(--color-primary) !important;
+            background: rgba(var(--color-teal-500-rgb), 0.05);
+        }
+
+        label:has(input[type="radio"]):hover {
+            border-color: var(--color-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚌 Transit Time Calculator</h1>
+
+        <div class="api-key-warning">
+            <strong>⚠️ Setup Required</strong>
+            You need to add your Google Maps API key in the code. Get one at:
+            <a href="https://developers.google.com/maps/documentation/javascript/get-api-key" target="_blank">Google Maps Platform</a>.
+            Enable the "Directions API" in your Google Cloud Console.
+        </div>
+
+        <div class="card">
+            <h2 style="font-size: 20px; margin-bottom: 16px;">Location Settings</h2>
+            
+            <div class="form-group">
+                <label>Home Location</label>
+                <div style="padding: 12px; background: rgba(var(--color-teal-500-rgb), 0.1); border-radius: var(--radius-base); font-size: 14px;">
+                    📍 22.316910, 114.163717
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Select Workplace</label>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <label style="display: flex; align-items: center; padding: 16px; border: 2px solid var(--color-border); border-radius: var(--radius-base); cursor: pointer; transition: all 0.2s;">
+                        <input type="radio" name="workplace" value="22.298189,113.934747" style="width: auto; margin-right: 12px;" checked>
+                        <div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">1️⃣ CX City</div>
+                            <div class="info-text" style="margin: 0;">22.298189, 113.934747</div>
+                        </div>
+                    </label>
+                    <label style="display: flex; align-items: center; padding: 16px; border: 2px solid var(--color-border); border-radius: var(--radius-base); cursor: pointer; transition: all 0.2s;">
+                        <input type="radio" name="workplace" value="22.316076,113.936037" style="width: auto; margin-right: 12px;">
+                        <div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">2️⃣ Airport</div>
+                            <div class="info-text" style="margin: 0;">22.316076, 113.936037</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="arrivalTime">Desired Arrival Time</label>
+                <input type="time" id="arrivalTime" value="09:00">
+                <div class="info-text">What time do you need to arrive at work?</div>
+            </div>
+
+            <button class="btn" onclick="calculateRoutes()">Calculate When to Leave</button>
+            <div class="error" id="error"></div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div>⏳ Calculating transit routes...</div>
+        </div>
+
+        <div class="results" id="results">
+            <div class="card">
+                <h2 style="font-size: 20px; margin-bottom: 16px;">Transit Options</h2>
+                <div id="routesContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ REPLACE WITH YOUR GOOGLE MAPS API KEY
+        const API_KEY = 'AIzaSyBD5iVr11BID7B1477W8W2tlfi0O0ac1KQ';
+
+        function extractCoordinates(input) {
+            input = input.trim();
+            
+            // Try to extract from Google Maps URL
+            const urlPatterns = [
+                /@(-?\d+\.\d+),(-?\d+\.\d+)/,  // @lat,lng format
+                /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/, // !3dlat!4dlng format
+                /q=(-?\d+\.\d+),(-?\d+\.\d+)/ // q=lat,lng format
+            ];
+            
+            for (const pattern of urlPatterns) {
+                const match = input.match(pattern);
+                if (match) {
+                    return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+                }
+            }
+            
+            // Try to parse as direct coordinates
+            const coordMatch = input.match(/^(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)$/);
+            if (coordMatch) {
+                return { lat: parseFloat(coordMatch[1]), lng: parseFloat(coordMatch[2]) };
+            }
+            
+            // Otherwise, return as address string
+            return input;
+        }
+
+        function calculateDepartureTime(arrivalTime, durationInSeconds) {
+            const [hours, minutes] = arrivalTime.split(':').map(Number);
+            const arrivalDate = new Date();
+            arrivalDate.setHours(hours, minutes, 0, 0);
+            
+            const departureDate = new Date(arrivalDate.getTime() - (durationInSeconds * 1000));
+            
+            return departureDate.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            });
+        }
+
+        function formatDuration(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            if (hours > 0) {
+                return `${hours}h ${minutes}m`;
+            }
+            return `${minutes} minutes`;
+        }
+
+        async function calculateRoutes() {
+            if (API_KEY === 'YOUR_API_KEY_HERE') {
+                showError('Please add your Google Maps API key in the code!');
+                return;
+            }
+
+            const homeLocation = '22.316910, 114.163717';
+            const workplaceRadio = document.querySelector('input[name="workplace"]:checked');
+            const arrivalTime = document.getElementById('arrivalTime').value;
+
+            if (!workplaceRadio || !arrivalTime) {
+                showError('Please select a workplace and arrival time');
+                return;
+            }
+
+            const workLocation = workplaceRadio.value;
+            const origin = extractCoordinates(homeLocation);
+            const destination = extractCoordinates(workLocation);
+
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('error').classList.remove('show');
+
+            try {
+                // Load Google Maps API dynamically
+                if (!window.google) {
+                    await loadGoogleMapsAPI();
+                }
+
+                const directionsService = new google.maps.DirectionsService();
+
+                // Calculate arrival time
+                const [hours, minutes] = arrivalTime.split(':').map(Number);
+                const targetArrival = new Date();
+                targetArrival.setHours(hours, minutes, 0, 0);
+
+                const request = {
+                    origin: origin,
+                    destination: destination,
+                    travelMode: google.maps.TravelMode.TRANSIT,
+                    transitOptions: {
+                        arrivalTime: targetArrival,
+                        modes: [google.maps.TransitMode.BUS, google.maps.TransitMode.RAIL, google.maps.TransitMode.SUBWAY],
+                        routingPreference: google.maps.TransitRoutePreference.FEWER_TRANSFERS
+                    },
+                    provideRouteAlternatives: true,
+                    unitSystem: google.maps.UnitSystem.METRIC
+                };
+
+                directionsService.route(request, (result, status) => {
+                    document.getElementById('loading').classList.remove('show');
+
+                    if (status === 'OK') {
+                        displayRoutes(result.routes, arrivalTime);
+                    } else {
+                        showError(`Unable to calculate routes: ${status}. Please check your locations and try again.`);
+                    }
+                });
+
+            } catch (error) {
+                document.getElementById('loading').classList.remove('show');
+                showError('Error: ' + error.message);
+            }
+        }
+
+        function displayRoutes(routes, arrivalTime) {
+            const container = document.getElementById('routesContainer');
+            container.innerHTML = '';
+
+            if (routes.length === 0) {
+                container.innerHTML = '<p>No transit routes found for these locations.</p>';
+                document.getElementById('results').classList.add('show');
+                return;
+            }
+
+            routes.forEach((route, index) => {
+                const leg = route.legs[0];
+                const duration = leg.duration.value;
+                const departureTime = calculateDepartureTime(arrivalTime, duration);
+
+                const routeDiv = document.createElement('div');
+                routeDiv.className = 'route-option';
+
+                let stepsHTML = '<div class="route-steps">';
+                leg.steps.forEach(step => {
+                    if (step.travel_mode === 'TRANSIT') {
+                        const transit = step.transit;
+                        const line = transit.line;
+                        stepsHTML += `
+                            <div class="step">
+                                <strong>${line.vehicle.type}</strong>: ${line.short_name || line.name} 
+                                (${transit.num_stops} stops) - ${step.duration.text}
+                            </div>
+                        `;
+                    } else {
+                        stepsHTML += `<div class="step">${step.instructions} - ${step.duration.text}</div>`;
+                    }
+                });
+                stepsHTML += '</div>';
+
+                routeDiv.innerHTML = `
+                    <div class="route-header">
+                        <div class="route-title">Option ${index + 1}</div>
+                        <div class="departure-time">Leave at ${departureTime}</div>
+                    </div>
+                    <div class="route-details">
+                        <div>🕐 Total Travel Time: ${leg.duration.text}</div>
+                        <div>📍 Distance: ${leg.distance.text}</div>
+                        <div>🎯 Arrive by: ${arrivalTime}</div>
+                    </div>
+                    ${stepsHTML}
+                `;
+
+                container.appendChild(routeDiv);
+            });
+
+            document.getElementById('results').classList.add('show');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+        }
+
+        function loadGoogleMapsAPI() {
+            return new Promise((resolve, reject) => {
+                if (window.google) {
+                    resolve();
+                    return;
+                }
+
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places`;
+                script.async = true;
+                script.defer = true;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+    </script>
+</body>
+</html>
