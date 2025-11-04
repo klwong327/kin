@@ -365,12 +365,6 @@
             <div class="info-text" id="arrivalTimeInfo"></div>
         </div>
 
-        <div class="form-group">
-            <label class="form-label" for="apiKey">Google Maps API Key</label>
-            <input type="text" id="apiKey" class="form-control" placeholder="Enter your API key">
-            <div class="info-text">Get your API key from <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" style="color: var(--color-primary)">Google Cloud Console</a></div>
-        </div>
-
         <button class="btn btn--primary" id="calculateBtn">Calculate Routes</button>
 
         <div id="results" class="results hidden"></div>
@@ -383,7 +377,6 @@
 
         const destinationRadios = document.querySelectorAll('input[name="destination"]');
         const flightTimeInput = document.getElementById('flightTime');
-        const apiKeyInput = document.getElementById('apiKey');
         const calculateBtn = document.getElementById('calculateBtn');
         const resultsDiv = document.getElementById('results');
         const arrivalTimeInfo = document.getElementById('arrivalTimeInfo');
@@ -402,16 +395,11 @@
 
         calculateBtn.addEventListener('click', async () => {
             const flightTime = flightTimeInput.value;
-            const apiKey = apiKeyInput.value.trim();
+            const apiKey = 'AIzaSyBD5iVr11BID7B1477W8W2tlfi0O0ac1KQ';
             const destination = document.querySelector('input[name="destination"]:checked').value;
 
             if (!flightTime) {
                 alert('Please enter the airplane fly time');
-                return;
-            }
-
-            if (!apiKey) {
-                alert('Please enter your Google Maps API Key');
                 return;
             }
 
