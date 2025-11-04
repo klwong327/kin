@@ -462,56 +462,64 @@
             let filteredRoutes = [];
             
             if (workplaceName.includes('CX City')) {
-                // For CX City: Find MTR route with bus transfer and direct airport bus (A or E series)
+                // For CX City: Find MTR route and direct airport bus route
                 let mtrRoute = null;
-                let directAirportBus = null;
+                let directAirportBusRoute = null;
                 
                 routes.forEach(route => {
                     const leg = route.legs[0];
                     let hasMTR = false;
                     let hasBus = false;
-                    let transitSteps = 0;
-                    let busRouteNumber = '';
+                    let transitSteps = [];
+                    let hasTungChung = false;
                     
                     leg.steps.forEach(step => {
                         if (step.travel_mode === 'TRANSIT') {
-                            transitSteps++;
+                            transitSteps.push(step);
                             const vehicleType = step.transit.line.vehicle.type;
+                            
                             if (vehicleType === 'HEAVY_RAIL' || vehicleType === 'SUBWAY' || vehicleType === 'METRO_RAIL') {
                                 hasMTR = true;
+                                // Check if this MTR stops at Tung Chung
+                                if (step.transit.arrival_stop.name.includes('Tung Chung') || 
+                                    step.transit.departure_stop.name.includes('Tung Chung')) {
+                                    hasTungChung = true;
+                                }
                             } else if (vehicleType === 'BUS') {
                                 hasBus = true;
-                                busRouteNumber = step.transit.line.short_name || step.transit.line.name || '';
                             }
                         }
                     });
                     
-                    // Option 1: MTR route with bus transfer (must have at least 2 transit steps: MTR + Bus)
-                    if (hasMTR && hasBus && transitSteps >= 2 && !mtrRoute) {
+                    // Option 1: MTR to Tung Chung + Bus transfer (minimum 2 transit steps)
+                    if (hasMTR && hasBus && hasTungChung && transitSteps.length >= 2 && !mtrRoute) {
                         mtrRoute = route;
                     }
-                    // Option 2: Direct airport bus (A or E series) with exactly 1 transit step
-                    else if (hasBus && !hasMTR && transitSteps === 1 && !directAirportBus) {
-                        // Check if bus route starts with A or E
-                        if (busRouteNumber.match(/^[AE]\d+/)) {
-                            directAirportBus = route;
+                    
+                    // Option 2: Direct airport bus A or E series (exactly 1 transit step, no transfers)
+                    if (hasBus && !hasMTR && transitSteps.length === 1 && !directAirportBusRoute) {
+                        const busStep = transitSteps[0];
+                        const busNumber = busStep.transit.line.short_name || busStep.transit.line.name || '';
+                        // Check if bus number starts with A or E
+                        if (busNumber.match(/^[AE]\d+/)) {
+                            directAirportBusRoute = route;
                         }
                     }
                 });
                 
                 // Add MTR route first (priority), then direct airport bus
                 if (mtrRoute) filteredRoutes.push(mtrRoute);
-                if (directAirportBus) filteredRoutes.push(directAirportBus);
+                if (directAirportBusRoute) filteredRoutes.push(directAirportBusRoute);
                 
-                // Console warning if required routes not found
+                // Warn if required routes not found
                 if (!mtrRoute) {
-                    console.warn('⚠️ Could not find MTR route with bus transfer (minimum 2 transit steps)');
+                    console.warn('Could not find MTR to Tung Chung with bus transfer route');
                 }
-                if (!directAirportBus) {
-                    console.warn('⚠️ Could not find direct airport bus (A or E series) with no transfers');
+                if (!directAirportBusRoute) {
+                    console.warn('Could not find direct airport bus (A/E series) route');
                 }
                 
-                // If we don't have both required types, fill with other routes as fallback
+                // If we don't have both, fill with other routes
                 if (filteredRoutes.length < 2) {
                     routes.forEach(route => {
                         if (filteredRoutes.length < 2 && !filteredRoutes.includes(route)) {
