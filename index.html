@@ -323,7 +323,7 @@
 
     <script>
         // ⚠️ REPLACE WITH YOUR GOOGLE MAPS API KEY
-        const API_KEY = 'YOUR_API_KEY_HERE';
+        const API_KEY = 'GOOGLE_API';
 
         function extractCoordinates(input) {
             input = input.trim();
@@ -400,7 +400,7 @@
             flightTime.setHours(flightHours, flightMinutes, 0, 0);
             
             // Subtract buffer time based on location
-            const bufferMinutes = workplaceRadio.value === '22.298189,113.934747' ? 90 : 75; // 1.5h for CX City, 1.15h for Airport
+            const bufferMinutes = workplaceRadio.value === '22.298189,113.934747' ? 90 : 60; // 1.5h for CX City, 1h for Airport
             const desiredArrivalTime = new Date(flightTime.getTime() - (bufferMinutes * 60 * 1000));
 
             document.getElementById('loading').classList.add('show');
