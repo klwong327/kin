@@ -323,7 +323,7 @@
 
     <script>
         // ⚠️ REPLACE WITH YOUR GOOGLE MAPS API KEY
-        const API_KEY = 'GOOGLE_API';
+        const API_KEY = GOOGLE_API;
 
         function extractCoordinates(input) {
             input = input.trim();
@@ -376,7 +376,7 @@
         }
 
         async function calculateRoutes() {
-            if (API_KEY === 'GOOGLE_API') {
+            if (API_KEY === GOOGLE_API) {
                 showError('Please add your Google Maps API key in the code!');
                 return;
             }
