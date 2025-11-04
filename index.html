@@ -300,9 +300,9 @@
             </div>
 
             <div class="form-group">
-                <label for="arrivalTime">Desired Arrival Time</label>
+                <label for="arrivalTime">Airplane Fly Time ✈️</label>
                 <input type="time" id="arrivalTime" value="09:00">
-                <div class="info-text">What time do you need to arrive at work?</div>
+                <div class="info-text">What time is your flight departure?</div>
             </div>
 
             <button class="btn" onclick="calculateRoutes()">Calculate When to Leave</button>
@@ -323,7 +323,7 @@
 
     <script>
         // ⚠️ REPLACE WITH YOUR GOOGLE MAPS API KEY
-        const API_KEY = 'AIzaSyBD5iVr11BID7B1477W8W2tlfi0O0ac1KQ';
+        const API_KEY = 'YOUR_API_KEY_HERE';
 
         function extractCoordinates(input) {
             input = input.trim();
@@ -394,6 +394,15 @@
             const origin = extractCoordinates(homeLocation);
             const destination = extractCoordinates(workLocation);
 
+            // Calculate desired arrival time based on workplace selection
+            const [flightHours, flightMinutes] = arrivalTime.split(':').map(Number);
+            const flightTime = new Date();
+            flightTime.setHours(flightHours, flightMinutes, 0, 0);
+            
+            // Subtract buffer time based on location
+            const bufferMinutes = workplaceRadio.value === '22.298189,113.934747' ? 90 : 75; // 1.5h for CX City, 1.15h for Airport
+            const desiredArrivalTime = new Date(flightTime.getTime() - (bufferMinutes * 60 * 1000));
+
             document.getElementById('loading').classList.add('show');
             document.getElementById('results').classList.remove('show');
             document.getElementById('error').classList.remove('show');
@@ -406,10 +415,8 @@
 
                 const directionsService = new google.maps.DirectionsService();
 
-                // Calculate arrival time
-                const [hours, minutes] = arrivalTime.split(':').map(Number);
-                const targetArrival = new Date();
-                targetArrival.setHours(hours, minutes, 0, 0);
+                // Use the pre-calculated desired arrival time
+                const targetArrival = desiredArrivalTime;
 
                 const request = {
                     origin: origin,
@@ -428,7 +435,7 @@
                     document.getElementById('loading').classList.remove('show');
 
                     if (status === 'OK') {
-                        displayRoutes(result.routes, arrivalTime);
+                        displayRoutes(result.routes, arrivalTime, desiredArrivalTime);
                     } else {
                         showError(`Unable to calculate routes: ${status}. Please check your locations and try again.`);
                     }
@@ -440,7 +447,7 @@
             }
         }
 
-        function displayRoutes(routes, arrivalTime) {
+        function displayRoutes(routes, flightTime, desiredArrivalTime) {
             const container = document.getElementById('routesContainer');
             container.innerHTML = '';
 
@@ -453,7 +460,14 @@
             routes.forEach((route, index) => {
                 const leg = route.legs[0];
                 const duration = leg.duration.value;
-                const departureTime = calculateDepartureTime(arrivalTime, duration);
+                
+                // Calculate departure time based on desired arrival (not flight time)
+                const arrivalTimeStr = desiredArrivalTime.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                });
+                const departureTime = calculateDepartureTime(arrivalTimeStr, duration);
 
                 const routeDiv = document.createElement('div');
                 routeDiv.className = 'route-option';
@@ -483,7 +497,7 @@
                     <div class="route-details">
                         <div>🕐 Total Travel Time: ${leg.duration.text}</div>
                         <div>📍 Distance: ${leg.distance.text}</div>
-                        <div>🎯 Arrive by: ${arrivalTime}</div>
+                        <div>✈️ Flight Time: ${flightTime}</div>
                     </div>
                     ${stepsHTML}
                 `;
