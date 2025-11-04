@@ -376,7 +376,7 @@
         }
 
         async function calculateRoutes() {
-            if (API_KEY === ' ') {
+            if (API_KEY === 'YOUR_API_KEY_HERE') {
                 showError('Please add your Google Maps API key in the code!');
                 return;
             }
@@ -391,6 +391,7 @@
             }
 
             const workLocation = workplaceRadio.value;
+            const workplaceName = workplaceRadio.parentElement.querySelector('div > div').textContent;
             const origin = extractCoordinates(homeLocation);
             const destination = extractCoordinates(workLocation);
 
@@ -435,7 +436,7 @@
                     document.getElementById('loading').classList.remove('show');
 
                     if (status === 'OK') {
-                        displayRoutes(result.routes, arrivalTime, desiredArrivalTime);
+                        displayRoutes(result.routes, arrivalTime, desiredArrivalTime, workplaceName);
                     } else {
                         showError(`Unable to calculate routes: ${status}. Please check your locations and try again.`);
                     }
@@ -447,7 +448,7 @@
             }
         }
 
-        function displayRoutes(routes, flightTime, desiredArrivalTime) {
+        function displayRoutes(routes, flightTime, desiredArrivalTime, workplaceName) {
             const container = document.getElementById('routesContainer');
             container.innerHTML = '';
 
@@ -457,29 +458,51 @@
                 return;
             }
 
-            routes.forEach((route, index) => {
+            // Limit to 2 options
+            const limitedRoutes = routes.slice(0, 2);
+
+            limitedRoutes.forEach((route, index) => {
                 const leg = route.legs[0];
                 const duration = leg.duration.value;
                 
-                // Calculate departure time based on desired arrival (not flight time)
+                // Calculate departure time (leave home time)
                 const arrivalTimeStr = desiredArrivalTime.toLocaleTimeString('en-US', { 
                     hour: '2-digit', 
                     minute: '2-digit',
                     hour12: false 
                 });
                 const departureTime = calculateDepartureTime(arrivalTimeStr, duration);
+                
+                // Calculate actual arrival at company time
+                const companyArrivalTime = desiredArrivalTime.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                });
 
                 const routeDiv = document.createElement('div');
                 routeDiv.className = 'route-option';
+
+                // Determine primary transportation mode
+                let primaryMode = 'Bus';
+                leg.steps.forEach(step => {
+                    if (step.travel_mode === 'TRANSIT') {
+                        const vehicleType = step.transit.line.vehicle.type;
+                        if (vehicleType === 'HEAVY_RAIL' || vehicleType === 'SUBWAY' || vehicleType === 'METRO_RAIL') {
+                            primaryMode = 'MTR';
+                        }
+                    }
+                });
 
                 let stepsHTML = '<div class="route-steps">';
                 leg.steps.forEach(step => {
                     if (step.travel_mode === 'TRANSIT') {
                         const transit = step.transit;
                         const line = transit.line;
+                        const vehicleType = line.vehicle.type === 'HEAVY_RAIL' || line.vehicle.type === 'SUBWAY' || line.vehicle.type === 'METRO_RAIL' ? 'MTR' : line.vehicle.type;
                         stepsHTML += `
                             <div class="step">
-                                <strong>${line.vehicle.type}</strong>: ${line.short_name || line.name} 
+                                <strong>${vehicleType}</strong>: ${line.short_name || line.name} 
                                 (${transit.num_stops} stops) - ${step.duration.text}
                             </div>
                         `;
@@ -491,13 +514,14 @@
 
                 routeDiv.innerHTML = `
                     <div class="route-header">
-                        <div class="route-title">Option ${index + 1}</div>
-                        <div class="departure-time">Leave at ${departureTime}</div>
+                        <div class="route-title">Option ${index + 1}: ${primaryMode}</div>
+                        <div class="departure-time">🏠 ${departureTime}</div>
                     </div>
                     <div class="route-details">
-                        <div>🕐 Total Travel Time: ${leg.duration.text}</div>
-                        <div>📍 Distance: ${leg.distance.text}</div>
-                        <div>✈️ Flight Time: ${flightTime}</div>
+                        <div><strong>🏠 Leave Home:</strong> ${departureTime}</div>
+                        <div><strong>🏢 Arrive ${workplaceName}:</strong> ${companyArrivalTime}</div>
+                        <div><strong>🕐 Travel Time:</strong> ${leg.duration.text}</div>
+                        <div><strong>✈️ Flight Time:</strong> ${flightTime}</div>
                     </div>
                     ${stepsHTML}
                 `;
