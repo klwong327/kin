@@ -401,7 +401,7 @@
             flightTime.setHours(flightHours, flightMinutes, 0, 0);
             
             // Subtract buffer time based on location
-            const bufferMinutes = workplaceRadio.value === '22.298189,113.934747' ? 110 : 100; // 110 for CX City, 100 for Airport
+            const bufferMinutes = workplaceRadio.value === '22.298189,113.934747' ? 100 : 92; // 100min for CX City, 92min for Airport
             const desiredArrivalTime = new Date(flightTime.getTime() - (bufferMinutes * 60 * 1000));
 
             document.getElementById('loading').classList.add('show');
@@ -458,10 +458,61 @@
                 return;
             }
 
-            // Limit to 2 options
-            const limitedRoutes = routes.slice(0, 2);
+            // Filter and prioritize routes based on workplace
+            let filteredRoutes = [];
+            
+            if (workplaceName.includes('CX City')) {
+                // For CX City: Find MTR route and direct bus route
+                let mtrRoute = null;
+                let directBusRoute = null;
+                
+                routes.forEach(route => {
+                    const leg = route.legs[0];
+                    let hasMTR = false;
+                    let hasBus = false;
+                    let hasTransit = false;
+                    
+                    leg.steps.forEach(step => {
+                        if (step.travel_mode === 'TRANSIT') {
+                            const vehicleType = step.transit.line.vehicle.type;
+                            if (vehicleType === 'HEAVY_RAIL' || vehicleType === 'SUBWAY' || vehicleType === 'METRO_RAIL') {
+                                hasMTR = true;
+                                hasTransit = true;
+                            } else if (vehicleType === 'BUS') {
+                                hasBus = true;
+                                if (hasMTR) hasTransit = true;
+                            }
+                        }
+                    });
+                    
+                    // MTR route with bus transfer
+                    if (hasMTR && hasTransit && !mtrRoute) {
+                        mtrRoute = route;
+                    }
+                    // Direct bus route (bus only, no MTR)
+                    else if (hasBus && !hasMTR && !directBusRoute) {
+                        directBusRoute = route;
+                    }
+                });
+                
+                // Add MTR route first (priority), then direct bus
+                if (mtrRoute) filteredRoutes.push(mtrRoute);
+                if (directBusRoute) filteredRoutes.push(directBusRoute);
+                
+                // If we don't have both, fill with other routes
+                if (filteredRoutes.length < 2) {
+                    routes.forEach(route => {
+                        if (filteredRoutes.length < 2 && !filteredRoutes.includes(route)) {
+                            filteredRoutes.push(route);
+                        }
+                    });
+                }
+            } else {
+                // For Airport: Just take first 2 routes
+                filteredRoutes = routes.slice(0, 2);
+            }
 
-            limitedRoutes.forEach((route, index) => {
+            filteredRoutes.forEach((route, index) => {
                 const leg = route.legs[0];
                 const duration = leg.duration.value;
                 
