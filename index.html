@@ -323,7 +323,7 @@
 
     <script>
         // ⚠️ REPLACE WITH YOUR GOOGLE MAPS API KEY
-        const API_KEY = 'AIzaSyBD5iVr11BID7B1477W8W2tlfi0O0ac1KQ';
+        const API_KEY = 'YOUR_API_KEY_HERE';
 
         function extractCoordinates(input) {
             input = input.trim();
@@ -376,7 +376,7 @@
         }
 
         async function calculateRoutes() {
-            if (API_KEY === 'YOUR_API_KEY_HERE') {
+            if (API_KEY === 'AIzaSyBD5iVr11BID7B1477W8W2tlfi0O0ac1KQ') {
                 showError('Please add your Google Maps API key in the code!');
                 return;
             }
@@ -401,7 +401,7 @@
             flightTime.setHours(flightHours, flightMinutes, 0, 0);
             
             // Subtract buffer time based on location
-            const bufferMinutes = workplaceRadio.value === '22.298189,113.934747' ? 100 : 100; // 1.5h for CX City, 1h for Airport
+            const bufferMinutes = workplaceRadio.value === '22.298189,113.934747' ? 100 : 92; // 100min for CX City, 92min for Airport
             const desiredArrivalTime = new Date(flightTime.getTime() - (bufferMinutes * 60 * 1000));
 
             document.getElementById('loading').classList.add('show');
