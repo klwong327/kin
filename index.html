@@ -401,7 +401,7 @@
             flightTime.setHours(flightHours, flightMinutes, 0, 0);
             
             // Subtract buffer time based on location
-            const bufferMinutes = workplaceRadio.value === '22.298189,113.934747' ? 100 : 92; // 100min for CX City, 92min for Airport
+            const bufferMinutes = workplaceRadio.value === '22.298189,113.934747' ? 110 : 100; // 100min for CX City, 92min for Airport
             const desiredArrivalTime = new Date(flightTime.getTime() - (bufferMinutes * 60 * 1000));
 
             document.getElementById('loading').classList.add('show');
