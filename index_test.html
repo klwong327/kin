@@ -383,28 +383,94 @@
         }
 
         async function getCXCityOptions(arrivalTime, destination) {
-            // Option 1: MTR to Tung Chung + Transit Bus
-            const mtrOption = await getDirections(
-                HOME_LOCATION,
-                destination,
-                arrivalTime,
-                'TRANSIT',
-                ['BUS', 'RAIL', 'SUBWAY']
-            );
+            const tungChungMTR = {lat: 22.2892471, lng: 113.941213};
+            const options = [];
 
-            // Option 2: Direct bus (no MTR)
-            const busOption = await getDirections(
-                HOME_LOCATION,
-                destination,
-                arrivalTime,
-                'TRANSIT',
-                ['BUS']
-            );
+            try {
+                // Option 1: MTR to Tung Chung + S/E bus from Tung Chung MTR
+                const mtrToBusOption = await getMultiLegRoute(
+                    HOME_LOCATION,
+                    tungChungMTR,
+                    destination,
+                    arrivalTime,
+                    'TRANSIT',
+                    ['RAIL', 'SUBWAY'],
+                    ['BUS']
+                );
+                if (mtrToBusOption) {
+                    options.push({ 
+                        ...mtrToBusOption, 
+                        title: 'Option 1: MTR → Tung Chung → S/E Bus', 
+                        badge: 'mtr' 
+                    });
+                }
+            } catch (e) {
+                console.error('MTR + Bus option failed:', e);
+            }
 
-            return [
-                { ...mtrOption, title: 'Option 1: MTR + Bus', badge: 'mtr' },
-                { ...busOption, title: 'Option 2: Direct Bus', badge: 'bus' }
-            ];
+            try {
+                // Option 2: Direct E or A bus from home (no transfers)
+                const directBusOption = await getDirections(
+                    HOME_LOCATION,
+                    destination,
+                    arrivalTime,
+                    'TRANSIT',
+                    ['BUS'],
+                    true // direct route only
+                );
+                if (directBusOption) {
+                    options.push({ 
+                        ...directBusOption, 
+                        title: 'Option 2: Direct E/A Bus from Home', 
+                        badge: 'bus' 
+                    });
+                }
+            } catch (e) {
+                console.error('Direct bus option failed:', e);
+            }
+
+            try {
+                // Option 3: Alternative MTR + Bus route
+                const altMTROption = await getDirections(
+                    HOME_LOCATION,
+                    destination,
+                    arrivalTime,
+                    'TRANSIT',
+                    ['BUS', 'RAIL', 'SUBWAY']
+                );
+                if (altMTROption && options.length < 4) {
+                    options.push({ 
+                        ...altMTROption, 
+                        title: 'Option 3: MTR + Transit Bus', 
+                        badge: 'mtr' 
+                    });
+                }
+            } catch (e) {
+                console.error('Alternative MTR option failed:', e);
+            }
+
+            try {
+                // Option 4: Any other bus route
+                const altBusOption = await getDirections(
+                    HOME_LOCATION,
+                    destination,
+                    arrivalTime,
+                    'TRANSIT',
+                    ['BUS']
+                );
+                if (altBusOption && options.length < 4) {
+                    options.push({ 
+                        ...altBusOption, 
+                        title: 'Option 4: Alternative Bus Route', 
+                        badge: 'bus' 
+                    });
+                }
+            } catch (e) {
+                console.error('Alternative bus option failed:', e);
+            }
+
+            // Return up to 4 options
+            return options.slice(0, 4);
         }
 
         async function getAirportOptions(arrivalTime, destination) {
@@ -432,7 +498,7 @@
             ];
         }
 
-        async function getDirections(origin, destination, arrivalTime, mode, transitModes) {
+        async function getDirections(origin, destination, arrivalTime, mode, transitModes, directOnly = false) {
             const url = new URL('https://maps.googleapis.com/maps/api/directions/json');
             
             url.searchParams.append('origin', `${origin.lat},${origin.lng}`);
@@ -453,7 +519,19 @@
                 throw new Error('No routes found');
             }
 
-            const route = data.routes[0];
+            // If directOnly is true, filter for routes with minimal transfers
+            let route;
+            if (directOnly) {
+                // Find route with fewest transfers (ideally 1 bus)
+                const directRoutes = data.routes.filter(r => {
+                    const transitSteps = r.legs[0].steps.filter(s => s.transit_details);
+                    return transitSteps.length === 1;
+                });
+                route = directRoutes[0] || data.routes[0];
+            } else {
+                route = data.routes[0];
+            }
+
             const leg = route.legs[0];
 
             return {
@@ -465,6 +543,71 @@
                     mode: step.travel_mode,
                     transitDetails: step.transit_details
                 }))
+            };
+        }
+
+        async function getMultiLegRoute(origin, waypoint, destination, arrivalTime, mode1, transitModes1, transitModes2) {
+            // Get route from origin to waypoint (e.g., home to Tung Chung MTR)
+            const leg1Url = new URL('https://maps.googleapis.com/maps/api/directions/json');
+            leg1Url.searchParams.append('origin', `${origin.lat},${origin.lng}`);
+            leg1Url.searchParams.append('destination', `${waypoint.lat},${waypoint.lng}`);
+            leg1Url.searchParams.append('mode', mode1);
+            leg1Url.searchParams.append('transit_mode', transitModes1.join('|'));
+            leg1Url.searchParams.append('key', API_KEY);
+
+            // Get route from waypoint to destination (e.g., Tung Chung to CX City)
+            const leg2Url = new URL('https://maps.googleapis.com/maps/api/directions/json');
+            leg2Url.searchParams.append('origin', `${waypoint.lat},${waypoint.lng}`);
+            leg2Url.searchParams.append('destination', `${destination.lat},${destination.lng}`);
+            leg2Url.searchParams.append('mode', mode1);
+            leg2Url.searchParams.append('transit_mode', transitModes2.join('|'));
+            leg2Url.searchParams.append('arrival_time', Math.floor(arrivalTime.getTime() / 1000));
+            leg2Url.searchParams.append('key', API_KEY);
+
+            const proxyUrl1 = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(leg1Url.toString());
+            const proxyUrl2 = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(leg2Url.toString());
+
+            const [response1, response2] = await Promise.all([
+                fetch(proxyUrl1),
+                fetch(proxyUrl2)
+            ]);
+
+            const [data1, data2] = await Promise.all([
+                response1.json(),
+                response2.json()
+            ]);
+
+            if (data1.status !== 'OK' || data2.status !== 'OK' || 
+                !data1.routes?.length || !data2.routes?.length) {
+                throw new Error('No routes found for multi-leg journey');
+            }
+
+            const leg1 = data1.routes[0].legs[0];
+            const leg2 = data2.routes[0].legs[0];
+
+            // Calculate total duration
+            const totalDurationSeconds = leg1.duration.value + leg2.duration.value;
+            const totalDurationText = Math.floor(totalDurationSeconds / 60) + ' mins';
+
+            // Combine steps
+            const allSteps = [
+                ...leg1.steps.map(step => ({
+                    instruction: step.html_instructions.replace(/<[^>]*>/g, ''),
+                    mode: step.travel_mode,
+                    transitDetails: step.transit_details
+                })),
+                ...leg2.steps.map(step => ({
+                    instruction: step.html_instructions.replace(/<[^>]*>/g, ''),
+                    mode: step.travel_mode,
+                    transitDetails: step.transit_details
+                }))
+            ];
+
+            return {
+                duration: totalDurationText,
+                departureTime: leg1.departure_time.text,
+                arrivalTime: leg2.arrival_time.text,
+                steps: allSteps
             };
         }
 
