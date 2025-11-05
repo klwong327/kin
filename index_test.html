@@ -310,6 +310,7 @@
         <div id="results" class="results"></div>
     </div>
 
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBD5iVr11BID7B1477W8W2tlfi0O0ac1KQ&libraries=places"></script>
     <script>
         // Hardcoded home location (hidden from user)
         const HOME_LOCATION = {lat: 22.316910, lng: 114.163717};
@@ -344,8 +345,8 @@
                 return;
             }
 
-            if (API_KEY === 'YOUR_API_KEY_HERE') {
-                resultsDiv.innerHTML = '<div class="error">Please add your Google Maps API key in the code.</div>';
+            if (API_KEY === 'YOUR_API_KEY_HERE' || typeof google === 'undefined') {
+                resultsDiv.innerHTML = '<div class="error">Please add your Google Maps API key in the code (line 12 and in script src tag).</div>';
                 return;
             }
 
@@ -367,7 +368,8 @@
 
                 displayResults(options, dutyTime, selectedAdvanceMinutes);
             } catch (error) {
-                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                console.error('Transit calculation error:', error);
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}<br><small>Check browser console for details.</small></div>`;
             }
         }
 
@@ -499,91 +501,107 @@
         }
 
         async function getDirections(origin, destination, arrivalTime, mode, transitModes, directOnly = false) {
-            const url = new URL('https://maps.googleapis.com/maps/api/directions/json');
+            const directionsService = new google.maps.DirectionsService();
             
-            url.searchParams.append('origin', `${origin.lat},${origin.lng}`);
-            url.searchParams.append('destination', `${destination.lat},${destination.lng}`);
-            url.searchParams.append('mode', mode);
-            url.searchParams.append('arrival_time', Math.floor(arrivalTime.getTime() / 1000));
-            url.searchParams.append('transit_mode', transitModes.join('|'));
-            url.searchParams.append('alternatives', 'true');
-            url.searchParams.append('key', API_KEY);
-
-            // Use CORS proxy for browser-based requests
-            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url.toString());
-
-            const response = await fetch(proxyUrl);
-            const data = await response.json();
-
-            if (data.status !== 'OK' || !data.routes || data.routes.length === 0) {
-                throw new Error('No routes found');
-            }
-
-            // If directOnly is true, filter for routes with minimal transfers
-            let route;
-            if (directOnly) {
-                // Find route with fewest transfers (ideally 1 bus)
-                const directRoutes = data.routes.filter(r => {
-                    const transitSteps = r.legs[0].steps.filter(s => s.transit_details);
-                    return transitSteps.length === 1;
-                });
-                route = directRoutes[0] || data.routes[0];
-            } else {
-                route = data.routes[0];
-            }
-
-            const leg = route.legs[0];
-
-            return {
-                duration: leg.duration.text,
-                departureTime: leg.departure_time.text,
-                arrivalTime: leg.arrival_time.text,
-                steps: leg.steps.map(step => ({
-                    instruction: step.html_instructions.replace(/<[^>]*>/g, ''),
-                    mode: step.travel_mode,
-                    transitDetails: step.transit_details
-                }))
+            const request = {
+                origin: new google.maps.LatLng(origin.lat, origin.lng),
+                destination: new google.maps.LatLng(destination.lat, destination.lng),
+                travelMode: google.maps.TravelMode.TRANSIT,
+                transitOptions: {
+                    modes: transitModes.map(m => google.maps.TransitMode[m]),
+                    arrivalTime: arrivalTime
+                },
+                provideRouteAlternatives: true
             };
+
+            return new Promise((resolve, reject) => {
+                directionsService.route(request, (result, status) => {
+                    if (status !== google.maps.DirectionsStatus.OK || !result.routes || result.routes.length === 0) {
+                        console.error('Directions API error:', status, result);
+                        reject(new Error(`No routes found (${status})`));
+                        return;
+                    }
+
+                    // If directOnly is true, filter for routes with minimal transfers
+                    let route;
+                    if (directOnly) {
+                        // Find route with fewest transfers (ideally 1 bus)
+                        const directRoutes = result.routes.filter(r => {
+                            const transitSteps = r.legs[0].steps.filter(s => s.transit);
+                            return transitSteps.length === 1;
+                        });
+                        route = directRoutes[0] || result.routes[0];
+                    } else {
+                        route = result.routes[0];
+                    }
+
+                    const leg = route.legs[0];
+
+                    resolve({
+                        duration: leg.duration.text,
+                        departureTime: leg.departure_time.text,
+                        arrivalTime: leg.arrival_time.text,
+                        steps: leg.steps.map(step => ({
+                            instruction: step.instructions.replace(/<[^>]*>/g, ''),
+                            mode: step.travel_mode,
+                            transitDetails: step.transit
+                        }))
+                    });
+                });
+            });
         }
 
         async function getMultiLegRoute(origin, waypoint, destination, arrivalTime, mode1, transitModes1, transitModes2) {
-            // Get route from origin to waypoint (e.g., home to Tung Chung MTR)
-            const leg1Url = new URL('https://maps.googleapis.com/maps/api/directions/json');
-            leg1Url.searchParams.append('origin', `${origin.lat},${origin.lng}`);
-            leg1Url.searchParams.append('destination', `${waypoint.lat},${waypoint.lng}`);
-            leg1Url.searchParams.append('mode', mode1);
-            leg1Url.searchParams.append('transit_mode', transitModes1.join('|'));
-            leg1Url.searchParams.append('key', API_KEY);
+            const directionsService = new google.maps.DirectionsService();
+            
+            // Get route from waypoint to destination first (we know arrival time)
+            const leg2Request = {
+                origin: new google.maps.LatLng(waypoint.lat, waypoint.lng),
+                destination: new google.maps.LatLng(destination.lat, destination.lng),
+                travelMode: google.maps.TravelMode.TRANSIT,
+                transitOptions: {
+                    modes: transitModes2.map(m => google.maps.TransitMode[m]),
+                    arrivalTime: arrivalTime
+                }
+            };
 
-            // Get route from waypoint to destination (e.g., Tung Chung to CX City)
-            const leg2Url = new URL('https://maps.googleapis.com/maps/api/directions/json');
-            leg2Url.searchParams.append('origin', `${waypoint.lat},${waypoint.lng}`);
-            leg2Url.searchParams.append('destination', `${destination.lat},${destination.lng}`);
-            leg2Url.searchParams.append('mode', mode1);
-            leg2Url.searchParams.append('transit_mode', transitModes2.join('|'));
-            leg2Url.searchParams.append('arrival_time', Math.floor(arrivalTime.getTime() / 1000));
-            leg2Url.searchParams.append('key', API_KEY);
+            const leg2Result = await new Promise((resolve, reject) => {
+                directionsService.route(leg2Request, (result, status) => {
+                    if (status !== google.maps.DirectionsStatus.OK) {
+                        reject(new Error(`Leg 2 failed: ${status}`));
+                        return;
+                    }
+                    resolve(result);
+                });
+            });
 
-            const proxyUrl1 = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(leg1Url.toString());
-            const proxyUrl2 = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(leg2Url.toString());
+            const leg2 = leg2Result.routes[0].legs[0];
+            
+            // Calculate departure time from waypoint (to arrive on time)
+            const waypointDepartureTime = new Date(arrivalTime.getTime() - leg2.duration.value * 1000);
 
-            const [response1, response2] = await Promise.all([
-                fetch(proxyUrl1),
-                fetch(proxyUrl2)
-            ]);
+            // Get route from origin to waypoint (arriving at waypoint departure time)
+            const leg1Request = {
+                origin: new google.maps.LatLng(origin.lat, origin.lng),
+                destination: new google.maps.LatLng(waypoint.lat, waypoint.lng),
+                travelMode: google.maps.TravelMode.TRANSIT,
+                transitOptions: {
+                    modes: transitModes1.map(m => google.maps.TransitMode[m]),
+                    arrivalTime: waypointDepartureTime
+                }
+            };
 
-            const [data1, data2] = await Promise.all([
-                response1.json(),
-                response2.json()
-            ]);
+            const leg1Result = await new Promise((resolve, reject) => {
+                directionsService.route(leg1Request, (result, status) => {
+                    if (status !== google.maps.DirectionsStatus.OK) {
+                        reject(new Error(`Leg 1 failed: ${status}`));
+                        return;
+                    }
+                    resolve(result);
+                });
+            });
 
-            if (data1.status !== 'OK' || data2.status !== 'OK' || 
-                !data1.routes?.length || !data2.routes?.length) {
-                throw new Error('No routes found for multi-leg journey');
-            }
-
-            const leg1 = data1.routes[0].legs[0];
-            const leg2 = data2.routes[0].legs[0];
+            const leg1 = leg1Result.routes[0].legs[0];
 
             // Calculate total duration
             const totalDurationSeconds = leg1.duration.value + leg2.duration.value;
@@ -592,14 +610,14 @@
             // Combine steps
             const allSteps = [
                 ...leg1.steps.map(step => ({
-                    instruction: step.html_instructions.replace(/<[^>]*>/g, ''),
+                    instruction: step.instructions.replace(/<[^>]*>/g, ''),
                     mode: step.travel_mode,
-                    transitDetails: step.transit_details
+                    transitDetails: step.transit
                 })),
                 ...leg2.steps.map(step => ({
-                    instruction: step.html_instructions.replace(/<[^>]*>/g, ''),
+                    instruction: step.instructions.replace(/<[^>]*>/g, ''),
                     mode: step.travel_mode,
-                    transitDetails: step.transit_details
+                    transitDetails: step.transit
                 }))
             ];
 
