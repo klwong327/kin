@@ -308,6 +308,21 @@
         <button class="btn" onclick="calculateTransit()">Calculate When to Leave</button>
 
         <div id="results" class="results"></div>
+
+        <!-- Airport Info Section -->
+        <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid var(--color-border);">
+            <h2 style="font-size: 20px; margin-bottom: 16px;">✈️ Airport Information Lookup</h2>
+            
+            <div class="form-group">
+                <label>Enter Airport Code (IATA)</label>
+                <input type="text" id="airportCode" placeholder="e.g., JFK, LAX, HKG" style="width: 100%; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 8px; font-size: 14px; background: var(--color-surface); color: var(--color-text); text-transform: uppercase;">
+                <small style="color: var(--color-text-secondary); display: block; margin-top: 4px;">Enter 3-letter IATA airport code</small>
+            </div>
+
+            <button class="btn" onclick="lookupAirport()">Search Airport</button>
+
+            <div id="airportResults" style="margin-top: 16px;"></div>
+        </div>
     </div>
 
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBD5iVr11BID7B1477W8W2tlfi0O0ac1KQ&libraries=places"></script>
@@ -345,7 +360,7 @@
                 return;
             }
 
-            if (API_KEY === 'YOUR_API_KEY_HERE' || typeof google === 'undefined') {
+            if (API_KEY === 'AIzaSyBD5iVr11BID7B1477W8W2tlfi0O0ac1KQ' || typeof google === 'undefined') {
                 resultsDiv.innerHTML = '<div class="error">Please add your Google Maps API key in the code (line 12 and in script src tag).</div>';
                 return;
             }
@@ -925,6 +940,145 @@
 
             resultsDiv.innerHTML = html;
         }
+
+        // Airport lookup functionality
+        async function lookupAirport() {
+            const airportCode = document.getElementById('airportCode').value.trim().toUpperCase();
+            const resultsDiv = document.getElementById('airportResults');
+
+            if (!airportCode || airportCode.length !== 3) {
+                resultsDiv.innerHTML = '<div class="error">Please enter a valid 3-letter airport code.</div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="loading">🔍 Looking up airport information...</div>';
+
+            try {
+                // Fetch airport data from AirLabs API (free tier)
+                const airportResponse = await fetch(`https://airlabs.co/api/v9/airports?iata_code=${airportCode}&api_key=YOUR_AIRLABS_API_KEY`);
+                
+                if (!airportResponse.ok) {
+                    throw new Error('Airport not found or API error');
+                }
+
+                const airportData = await airportResponse.json();
+                
+                if (!airportData.response || airportData.response.length === 0) {
+                    resultsDiv.innerHTML = '<div class="error">Airport code not found. Please check and try again.</div>';
+                    return;
+                }
+
+                const airport = airportData.response[0];
+                
+                // Get weather data from Open-Meteo (free, no API key needed)
+                const weatherResponse = await fetch(
+                    `https://api.open-meteo.com/v1/forecast?latitude=${airport.lat}&longitude=${airport.lng}&current=temperature_2m,weather_code&timezone=auto`
+                );
+                
+                const weatherData = await weatherResponse.json();
+                
+                // Calculate time difference with HKT (GMT+8)
+                const airportTimezone = airport.timezone;
+                const hktOffset = 8 * 60; // HKT is GMT+8 in minutes
+                
+                // Get current time in airport's timezone
+                const now = new Date();
+                const airportTime = new Date(now.toLocaleString('en-US', { timeZone: airportTimezone }));
+                const hktTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Hong_Kong' }));
+                
+                // Calculate time difference in hours
+                const timeDiff = (airportTime.getTime() - hktTime.getTime()) / (1000 * 60 * 60);
+                const timeDiffText = timeDiff >= 0 ? `+${timeDiff.toFixed(1)}` : timeDiff.toFixed(1);
+                
+                // Weather code to description mapping (WMO codes)
+                const weatherDescriptions = {
+                    0: '☀️ Clear sky',
+                    1: '🌤️ Mainly clear',
+                    2: '⛅ Partly cloudy',
+                    3: '☁️ Overcast',
+                    45: '🌫️ Foggy',
+                    48: '🌫️ Depositing rime fog',
+                    51: '🌦️ Light drizzle',
+                    53: '🌦️ Moderate drizzle',
+                    55: '🌧️ Dense drizzle',
+                    61: '🌧️ Slight rain',
+                    63: '🌧️ Moderate rain',
+                    65: '🌧️ Heavy rain',
+                    71: '🌨️ Slight snow',
+                    73: '🌨️ Moderate snow',
+                    75: '🌨️ Heavy snow',
+                    77: '❄️ Snow grains',
+                    80: '🌦️ Slight rain showers',
+                    81: '🌧️ Moderate rain showers',
+                    82: '🌧️ Violent rain showers',
+                    85: '🌨️ Slight snow showers',
+                    86: '🌨️ Heavy snow showers',
+                    95: '⛈️ Thunderstorm',
+                    96: '⛈️ Thunderstorm with slight hail',
+                    99: '⛈️ Thunderstorm with heavy hail'
+                };
+
+                const weatherCode = weatherData.current.weather_code;
+                const weatherDesc = weatherDescriptions[weatherCode] || '🌤️ Unknown';
+                const temperature = weatherData.current.temperature_2m;
+
+                // Display results
+                let html = `
+                    <div class="option">
+                        <div class="option-header">
+                            <div class="option-title">${airport.name} (${airportCode})</div>
+                            <div class="option-badge badge-mtr">${airport.country_code}</div>
+                        </div>
+                        <div class="option-details">
+                            <div class="time-row">
+                                <span class="time-label">🌍 Country:</span>
+                                <span class="time-value">${airport.country_code}</span>
+                            </div>
+                            <div class="time-row">
+                                <span class="time-label">🏙️ City:</span>
+                                <span class="time-value">${airport.city || 'N/A'}</span>
+                            </div>
+                            <div class="time-row">
+                                <span class="time-label">🕐 Local Time:</span>
+                                <span class="time-value">${airportTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                            </div>
+                            <div class="time-row">
+                                <span class="time-label">⏰ Time Diff from HKT:</span>
+                                <span class="time-value">${timeDiffText} hours</span>
+                            </div>
+                            <div class="time-row">
+                                <span class="time-label">🌡️ Temperature:</span>
+                                <span class="time-value">${temperature}°C</span>
+                            </div>
+                            <div class="time-row">
+                                <span class="time-label">🌤️ Weather:</span>
+                                <span class="time-value">${weatherDesc}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                resultsDiv.innerHTML = html;
+
+            } catch (error) {
+                console.error('Airport lookup error:', error);
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <strong>Error fetching airport data</strong><br>
+                        <small>Note: This feature requires a free API key from <a href="https://airlabs.co" target="_blank" style="color: var(--color-primary);">AirLabs.co</a>. 
+                        Please add your API key in the code (search for YOUR_AIRLABS_API_KEY).</small><br>
+                        <small style="margin-top: 8px; display: block;">Weather data from Open-Meteo is free and requires no API key.</small>
+                    </div>
+                `;
+            }
+        }
+
+        // Allow Enter key to trigger airport search
+        document.getElementById('airportCode').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                lookupAirport();
+            }
+        });
     </script>
 </body>
 </html>
