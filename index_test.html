@@ -941,6 +941,90 @@
             resultsDiv.innerHTML = html;
         }
 
+        // Embedded airport database (69+ major airports worldwide)
+        const AIRPORTS_DB = {
+            // Original 20 airports
+            "JFK": {name: "John F Kennedy International Airport", city: "New York", country: "US", lat: 40.6413, lng: -73.7781, tz: "America/New_York"},
+            "LAX": {name: "Los Angeles International Airport", city: "Los Angeles", country: "US", lat: 33.9416, lng: -118.4085, tz: "America/Los_Angeles"},
+            "LHR": {name: "London Heathrow Airport", city: "London", country: "GB", lat: 51.4700, lng: -0.4543, tz: "Europe/London"},
+            "HKG": {name: "Hong Kong International Airport", city: "Hong Kong", country: "HK", lat: 22.3080, lng: 113.9185, tz: "Asia/Hong_Kong"},
+            "NRT": {name: "Narita International Airport", city: "Tokyo", country: "JP", lat: 35.7647, lng: 140.3864, tz: "Asia/Tokyo"},
+            "CDG": {name: "Charles de Gaulle Airport", city: "Paris", country: "FR", lat: 49.0097, lng: 2.5479, tz: "Europe/Paris"},
+            "DXB": {name: "Dubai International Airport", city: "Dubai", country: "AE", lat: 25.2532, lng: 55.3657, tz: "Asia/Dubai"},
+            "SIN": {name: "Singapore Changi Airport", city: "Singapore", country: "SG", lat: 1.3644, lng: 103.9915, tz: "Asia/Singapore"},
+            "ICN": {name: "Incheon International Airport", city: "Seoul", country: "KR", lat: 37.4602, lng: 126.4407, tz: "Asia/Seoul"},
+            "SYD": {name: "Sydney Kingsford Smith Airport", city: "Sydney", country: "AU", lat: -33.9461, lng: 151.1772, tz: "Australia/Sydney"},
+            "TPE": {name: "Taiwan Taoyuan International Airport", city: "Taipei", country: "TW", lat: 25.0797, lng: 121.2342, tz: "Asia/Taipei"},
+            "BKK": {name: "Suvarnabhumi Airport", city: "Bangkok", country: "TH", lat: 13.6900, lng: 100.7501, tz: "Asia/Bangkok"},
+            "FRA": {name: "Frankfurt Airport", city: "Frankfurt", country: "DE", lat: 50.0379, lng: 8.5622, tz: "Europe/Berlin"},
+            "AMS": {name: "Amsterdam Airport Schiphol", city: "Amsterdam", country: "NL", lat: 52.3105, lng: 4.7683, tz: "Europe/Amsterdam"},
+            "ORD": {name: "O'Hare International Airport", city: "Chicago", country: "US", lat: 41.9742, lng: -87.9073, tz: "America/Chicago"},
+            "SFO": {name: "San Francisco International Airport", city: "San Francisco", country: "US", lat: 37.6213, lng: -122.3790, tz: "America/Los_Angeles"},
+            "MIA": {name: "Miami International Airport", city: "Miami", country: "US", lat: 25.7959, lng: -80.2870, tz: "America/New_York"},
+            "YYZ": {name: "Toronto Pearson International Airport", city: "Toronto", country: "CA", lat: 43.6777, lng: -79.6248, tz: "America/Toronto"},
+            "MEX": {name: "Mexico City International Airport", city: "Mexico City", country: "MX", lat: 19.4363, lng: -99.0721, tz: "America/Mexico_City"},
+            "GRU": {name: "São Paulo/Guarulhos International Airport", city: "São Paulo", country: "BR", lat: -23.4356, lng: -46.4731, tz: "America/Sao_Paulo"},
+            
+            // Australia
+            "ADL": {name: "Adelaide Airport", city: "Adelaide", country: "AU", lat: -34.945, lng: 138.531, tz: "Australia/Adelaide"},
+            "CNS": {name: "Cairns Airport", city: "Cairns", country: "AU", lat: -16.886, lng: 145.755, tz: "Australia/Brisbane"},
+            "HBA": {name: "Hobart Airport", city: "Hobart", country: "AU", lat: -42.836, lng: 147.510, tz: "Australia/Hobart"},
+            "PER": {name: "Perth Airport", city: "Perth", country: "AU", lat: -31.940, lng: 115.967, tz: "Australia/Perth"},
+            "WTB": {name: "Toowoomba Wellcamp Airport", city: "Toowoomba", country: "AU", lat: -27.558, lng: 151.916, tz: "Australia/Brisbane"},
+            
+            // Asia
+            "DAC": {name: "Hazrat Shahjalal International Airport", city: "Dhaka", country: "BD", lat: 23.843, lng: 90.398, tz: "Asia/Dhaka"},
+            "PNH": {name: "Techo International Airport", city: "Phnom Penh", country: "KH", lat: 11.547, lng: 104.845, tz: "Asia/Phnom_Penh"},
+            "CTU": {name: "Chengdu Tianfu International Airport", city: "Chengdu", country: "CN", lat: 30.308, lng: 104.443, tz: "Asia/Shanghai"},
+            "CKG": {name: "Chongqing Jiangbei International Airport", city: "Chongqing", country: "CN", lat: 29.719, lng: 106.642, tz: "Asia/Shanghai"},
+            "FOC": {name: "Fuzhou Changle International Airport", city: "Fuzhou", country: "CN", lat: 25.935, lng: 119.663, tz: "Asia/Shanghai"},
+            "HAK": {name: "Haikou Meilan International Airport", city: "Haikou", country: "CN", lat: 19.935, lng: 110.459, tz: "Asia/Shanghai"},
+            "HGH": {name: "Hangzhou Xiaoshan International Airport", city: "Hangzhou", country: "CN", lat: 30.229, lng: 120.434, tz: "Asia/Shanghai"},
+            "NKG": {name: "Nanjing Lukou International Airport", city: "Nanjing", country: "CN", lat: 31.742, lng: 118.862, tz: "Asia/Shanghai"},
+            "NGB": {name: "Ningbo Lishe International Airport", city: "Ningbo", country: "CN", lat: 29.827, lng: 121.462, tz: "Asia/Shanghai"},
+            "TAO": {name: "Qingdao Jiaodong International Airport", city: "Qingdao", country: "CN", lat: 36.267, lng: 120.374, tz: "Asia/Shanghai"},
+            "SYX": {name: "Sanya Phoenix International Airport", city: "Sanya", country: "CN", lat: 18.303, lng: 109.412, tz: "Asia/Shanghai"},
+            "SHA": {name: "Shanghai Hongqiao International Airport", city: "Shanghai", country: "CN", lat: 31.198, lng: 121.336, tz: "Asia/Shanghai"},
+            "URC": {name: "Ürümqi Tianshan International Airport", city: "Ürümqi", country: "CN", lat: 43.907, lng: 87.474, tz: "Asia/Urumqi"},
+            "WNZ": {name: "Wenzhou Yongqiang International Airport", city: "Wenzhou", country: "CN", lat: 27.912, lng: 120.852, tz: "Asia/Shanghai"},
+            "WUH": {name: "Wuhan Tianhe International Airport", city: "Wuhan", country: "CN", lat: 30.784, lng: 114.208, tz: "Asia/Shanghai"},
+            "XMN": {name: "Xiamen Gaoqi International Airport", city: "Xiamen", country: "CN", lat: 24.544, lng: 118.128, tz: "Asia/Shanghai"},
+            "CGO": {name: "Zhengzhou Xinzheng International Airport", city: "Zhengzhou", country: "CN", lat: 34.520, lng: 113.841, tz: "Asia/Shanghai"},
+            "BLR": {name: "Kempegowda International Airport", city: "Bengaluru", country: "IN", lat: 13.199, lng: 77.706, tz: "Asia/Kolkata"},
+            "MAA": {name: "Chennai International Airport", city: "Chennai", country: "IN", lat: 12.990, lng: 80.169, tz: "Asia/Kolkata"},
+            "DPS": {name: "Ngurah Rai International Airport", city: "Denpasar (Bali)", country: "ID", lat: -8.748, lng: 115.167, tz: "Asia/Makassar"},
+            "SUB": {name: "Juanda International Airport", city: "Surabaya", country: "ID", lat: -7.380, lng: 112.787, tz: "Asia/Jakarta"},
+            "FUK": {name: "Fukuoka Airport", city: "Fukuoka", country: "JP", lat: 33.586, lng: 130.451, tz: "Asia/Tokyo"},
+            "NGO": {name: "Chubu Centrair International Airport", city: "Nagoya", country: "JP", lat: 34.858, lng: 136.805, tz: "Asia/Tokyo"},
+            "CTS": {name: "New Chitose Airport", city: "Sapporo", country: "JP", lat: 42.775, lng: 141.692, tz: "Asia/Tokyo"},
+            "PEN": {name: "Penang International Airport", city: "Penang", country: "MY", lat: 5.297, lng: 100.277, tz: "Asia/Kuala_Lumpur"},
+            "KTM": {name: "Tribhuvan International Airport", city: "Kathmandu", country: "NP", lat: 27.697, lng: 85.359, tz: "Asia/Kathmandu"},
+            "CEB": {name: "Mactan–Cebu International Airport", city: "Cebu", country: "PH", lat: 10.308, lng: 123.979, tz: "Asia/Manila"},
+            "RUH": {name: "King Khalid International Airport", city: "Riyadh", country: "SA", lat: 24.958, lng: 46.699, tz: "Asia/Riyadh"},
+            "CMB": {name: "Bandaranaike International Airport", city: "Colombo", country: "LK", lat: 7.181, lng: 79.884, tz: "Asia/Colombo"},
+            
+            // Europe
+            "BRU": {name: "Brussels Airport", city: "Brussels", country: "BE", lat: 50.901, lng: 4.484, tz: "Europe/Brussels"},
+            "MXP": {name: "Milan Malpensa Airport", city: "Milan", country: "IT", lat: 45.630, lng: 8.728, tz: "Europe/Rome"},
+            "FCO": {name: "Rome Fiumicino Airport", city: "Rome", country: "IT", lat: 41.804, lng: 12.251, tz: "Europe/Rome"},
+            "BCN": {name: "Josep Tarradellas Barcelona–El Prat Airport", city: "Barcelona", country: "ES", lat: 41.297, lng: 2.078, tz: "Europe/Madrid"},
+            "MAD": {name: "Adolfo Suárez Madrid–Barajas Airport", city: "Madrid", country: "ES", lat: 40.472, lng: -3.561, tz: "Europe/Madrid"},
+            "MAN": {name: "Manchester Airport", city: "Manchester", country: "GB", lat: 53.354, lng: -2.275, tz: "Europe/London"},
+            
+            // Africa
+            "JNB": {name: "O. R. Tambo International Airport", city: "Johannesburg", country: "ZA", lat: -26.139, lng: 28.246, tz: "Africa/Johannesburg"},
+            
+            // North America
+            "YYC": {name: "Calgary International Airport", city: "Calgary", country: "CA", lat: 51.114, lng: -114.020, tz: "America/Edmonton"},
+            "BOS": {name: "Logan International Airport", city: "Boston", country: "US", lat: 42.364, lng: -71.005, tz: "America/New_York"},
+            "DFW": {name: "Dallas Fort Worth International Airport", city: "Dallas", country: "US", lat: 32.897, lng: -97.038, tz: "America/Chicago"},
+            "SEA": {name: "Seattle–Tacoma International Airport", city: "Seattle", country: "US", lat: 47.449, lng: -122.309, tz: "America/Los_Angeles"},
+            "PDX": {name: "Portland International Airport", city: "Portland", country: "US", lat: 45.589, lng: -122.598, tz: "America/Los_Angeles"},
+            "IAH": {name: "George Bush Intercontinental Airport", city: "Houston", country: "US", lat: 29.984, lng: -95.342, tz: "America/Chicago"},
+            "ATL": {name: "Hartsfield–Jackson Atlanta International Airport", city: "Atlanta", country: "US", lat: 33.636, lng: -84.428, tz: "America/New_York"},
+            "GDL": {name: "Guadalajara International Airport", city: "Guadalajara", country: "MX", lat: 20.522, lng: -103.311, tz: "America/Mexico_City"}
+        };
+
         // Airport lookup functionality
         async function lookupAirport() {
             const airportCode = document.getElementById('airportCode').value.trim().toUpperCase();
@@ -954,21 +1038,13 @@
             resultsDiv.innerHTML = '<div class="loading">🔍 Looking up airport information...</div>';
 
             try {
-                // Fetch airport data from AirLabs API (free tier)
-                const airportResponse = await fetch(`https://airlabs.co/api/v9/airports?iata_code=${airportCode}&api_key=YOUR_AIRLABS_API_KEY`);
+                // Check if airport exists in embedded database
+                const airport = AIRPORTS_DB[airportCode];
                 
-                if (!airportResponse.ok) {
-                    throw new Error('Airport not found or API error');
-                }
-
-                const airportData = await airportResponse.json();
-                
-                if (!airportData.response || airportData.response.length === 0) {
-                    resultsDiv.innerHTML = '<div class="error">Airport code not found. Please check and try again.</div>';
+                if (!airport) {
+                    resultsDiv.innerHTML = '<div class="error">Airport code not found in database. Currently supporting 20+ major international airports.</div>';
                     return;
                 }
-
-                const airport = airportData.response[0];
                 
                 // Get weather data from Open-Meteo (free, no API key needed)
                 const weatherResponse = await fetch(
@@ -978,13 +1054,12 @@
                 const weatherData = await weatherResponse.json();
                 
                 // Calculate time difference with HKT (GMT+8)
-                const airportTimezone = airport.timezone;
-                const hktOffset = 8 * 60; // HKT is GMT+8 in minutes
+                const airportTimezone = airport.tz;
                 
                 // Get current time in airport's timezone
                 const now = new Date();
-                const airportTime = new Date(now.toLocaleString('en-US', { timeZone: airportTimezone }));
-                const hktTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Hong_Kong' }));
+                const airportTime = new Date(now.toLocaleString('en-US', { timeZone: airportTimezone, hour12: false }));
+                const hktTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Hong_Kong', hour12: false }));
                 
                 // Calculate time difference in hours
                 const timeDiff = (airportTime.getTime() - hktTime.getTime()) / (1000 * 60 * 60);
@@ -1040,7 +1115,11 @@
                             </div>
                             <div class="time-row">
                                 <span class="time-label">🕐 Local Time:</span>
-                                <span class="time-value">${airportTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                                <span class="time-value">${airportTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} (${airportTime.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })})</span>
+                            </div>
+                            <div class="time-row">
+                                <span class="time-label">🇭🇰 Hong Kong Time:</span>
+                                <span class="time-value">${hktTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })} (${hktTime.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })})</span>
                             </div>
                             <div class="time-row">
                                 <span class="time-label">⏰ Time Diff from HKT:</span>
@@ -1065,9 +1144,8 @@
                 resultsDiv.innerHTML = `
                     <div class="error">
                         <strong>Error fetching airport data</strong><br>
-                        <small>Note: This feature requires a free API key from <a href="https://airlabs.co" target="_blank" style="color: var(--color-primary);">AirLabs.co</a>. 
-                        Please add your API key in the code (search for YOUR_AIRLABS_API_KEY).</small><br>
-                        <small style="margin-top: 8px; display: block;">Weather data from Open-Meteo is free and requires no API key.</small>
+                        <small>${error.message}</small><br>
+                        <small style="margin-top: 8px; display: block;">Currently supporting 69+ major international airports including JFK, LAX, LHR, HKG, NRT, CDG, DXB, SIN, ICN, SYD, TPE, BKK, CTU, SHA, BLR, MAA, DPS, and more.</small>
                     </div>
                 `;
             }
