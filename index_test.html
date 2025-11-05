@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transit Time Calculator</title>
+    <title>Bing tools</title>
     <style>
         :root {
             --color-cream-50: rgba(252, 252, 249, 1);
@@ -271,12 +271,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚌 Transit Time Calculator</h1>
-
-        <div class="setup-warning">
-            <h3>⚠️ Setup Required</h3>
-            <p>You need to add your Google Maps API key in the code. Get one at: <a href="https://console.cloud.google.com/google/maps-apis" target="_blank">Google Maps Platform</a>. Enable the "Directions API" in your Google Cloud Console.</p>
-        </div>
+        <h1>💕For Bing Bing😘</h1>
 
         <div class="form-group">
             <label>Select Workplace</label>
@@ -302,7 +297,7 @@
                 <button class="advance-btn" data-minutes="35">35 mins</button>
                 <button class="advance-btn" data-minutes="40">40 mins</button>
             </div>
-            <small style="color: var(--color-text-secondary); display: block; margin-top: 8px;">How early should you arrive before duty time?</small>
+            <small style="color: var(--color-text-secondary); display: block; margin-top: 8px;">GOOD LUCK TO YOU!</small>
         </div>
 
         <button class="btn" onclick="calculateTransit()">Calculate When to Leave</button>
@@ -311,15 +306,14 @@
 
         <!-- Airport Info Section -->
         <div style="margin-top: 40px; padding-top: 30px; border-top: 2px solid var(--color-border);">
-            <h2 style="font-size: 20px; margin-bottom: 16px;">✈️ Airport Information Lookup</h2>
+            <h2 style="font-size: 20px; margin-bottom: 16px;">✈️ Airport Information Lookup ️✈️</h2>
             
             <div class="form-group">
                 <label>Enter Airport Code (IATA)</label>
-                <input type="text" id="airportCode" placeholder="e.g., JFK, LAX, HKG" style="width: 100%; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 8px; font-size: 14px; background: var(--color-surface); color: var(--color-text); text-transform: uppercase;">
-                <small style="color: var(--color-text-secondary); display: block; margin-top: 4px;">Enter 3-letter IATA airport code</small>
+                <input type="text" id="airportCode" placeholder=" " style="width: 100%; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: 8px; font-size: 14px; background: var(--color-surface); color: var(--color-text); text-transform: uppercase;">
             </div>
 
-            <button class="btn" onclick="lookupAirport()">Search Airport</button>
+            <button class="btn" onclick="lookupAirport()">Search!</button>
 
             <div id="airportResults" style="margin-top: 16px;"></div>
         </div>
@@ -941,7 +935,7 @@
             resultsDiv.innerHTML = html;
         }
 
-        // Embedded airport database (69+ major airports worldwide)
+        // Embedded airport database (160+ major airports worldwide)
         const AIRPORTS_DB = {
             // Original 20 airports
             "JFK": {name: "John F Kennedy International Airport", city: "New York", country: "US", lat: 40.6413, lng: -73.7781, tz: "America/New_York"},
@@ -1022,7 +1016,104 @@
             "PDX": {name: "Portland International Airport", city: "Portland", country: "US", lat: 45.589, lng: -122.598, tz: "America/Los_Angeles"},
             "IAH": {name: "George Bush Intercontinental Airport", city: "Houston", country: "US", lat: 29.984, lng: -95.342, tz: "America/Chicago"},
             "ATL": {name: "Hartsfield–Jackson Atlanta International Airport", city: "Atlanta", country: "US", lat: 33.636, lng: -84.428, tz: "America/New_York"},
-            "GDL": {name: "Guadalajara International Airport", city: "Guadalajara", country: "MX", lat: 20.522, lng: -103.311, tz: "America/Mexico_City"}
+            "GDL": {name: "Guadalajara International Airport", city: "Guadalajara", country: "MX", lat: 20.522, lng: -103.311, tz: "America/Mexico_City"},
+            
+            // Additional major airports from comprehensive IATA codes list
+            "AAL": {name: "Aalborg Airport", city: "Aalborg", country: "DK", lat: 57.093, lng: 9.849, tz: "Europe/Copenhagen"},
+            "AAR": {name: "Aarhus Airport", city: "Aarhus", country: "DK", lat: 56.300, lng: 10.619, tz: "Europe/Copenhagen"},
+            "ACA": {name: "General Juan N Alvarez International Airport", city: "Acapulco", country: "MX", lat: 16.757, lng: -99.754, tz: "America/Mexico_City"},
+            "ACC": {name: "Kotoka International Airport", city: "Accra", country: "GH", lat: 5.605, lng: -0.167, tz: "Africa/Accra"},
+            "ADD": {name: "Addis Ababa Bole International Airport", city: "Addis Ababa", country: "ET", lat: 8.978, lng: 38.799, tz: "Africa/Addis_Ababa"},
+            "ADE": {name: "Aden International Airport", city: "Aden", country: "YE", lat: 12.829, lng: 45.029, tz: "Asia/Aden"},
+            "AGA": {name: "Agadir-Al Massira Airport", city: "Agadir", country: "MA", lat: 30.325, lng: -9.413, tz: "Africa/Casablanca"},
+            "AGU": {name: "Aguascalientes International Airport", city: "Aguascalientes", country: "MX", lat: 21.705, lng: -102.318, tz: "America/Mexico_City"},
+            "AKL": {name: "Auckland Airport", city: "Auckland", country: "NZ", lat: -37.008, lng: 174.792, tz: "Pacific/Auckland"},
+            "ALC": {name: "Alicante-Elche Airport", city: "Alicante", country: "ES", lat: 38.282, lng: -0.558, tz: "Europe/Madrid"},
+            "ALG": {name: "Houari Boumediene Airport", city: "Algiers", country: "DZ", lat: 36.691, lng: 3.215, tz: "Africa/Algiers"},
+            "AMM": {name: "Queen Alia International Airport", city: "Amman", country: "JO", lat: 31.722, lng: 35.993, tz: "Asia/Amman"},
+            "ANC": {name: "Ted Stevens Anchorage International Airport", city: "Anchorage", country: "US", lat: 61.174, lng: -149.996, tz: "America/Anchorage"},
+            "AUA": {name: "Queen Beatrix International Airport", city: "Aruba", country: "AW", lat: 12.501, lng: -70.015, tz: "America/Aruba"},
+            "AUH": {name: "Abu Dhabi International Airport", city: "Abu Dhabi", country: "AE", lat: 24.433, lng: 54.651, tz: "Asia/Dubai"},
+            "AYT": {name: "Antalya Airport", city: "Antalya", country: "TR", lat: 36.899, lng: 30.800, tz: "Europe/Istanbul"},
+            "BAH": {name: "Bahrain International Airport", city: "Bahrain", country: "BH", lat: 26.271, lng: 50.634, tz: "Asia/Bahrain"},
+            "BEG": {name: "Belgrade Nikola Tesla Airport", city: "Belgrade", country: "RS", lat: 44.818, lng: 20.309, tz: "Europe/Belgrade"},
+            "BEY": {name: "Rafic Hariri International Airport", city: "Beirut", country: "LB", lat: 33.821, lng: 35.488, tz: "Asia/Beirut"},
+            "BGO": {name: "Bergen Airport Flesland", city: "Bergen", country: "NO", lat: 60.293, lng: 5.218, tz: "Europe/Oslo"},
+            "BGW": {name: "Baghdad International Airport", city: "Baghdad", country: "IQ", lat: 33.262, lng: 44.235, tz: "Asia/Baghdad"},
+            "BNE": {name: "Brisbane Airport", city: "Brisbane", country: "AU", lat: -27.384, lng: 153.118, tz: "Australia/Brisbane"},
+            "BOG": {name: "El Dorado International Airport", city: "Bogota", country: "CO", lat: 4.702, lng: -74.147, tz: "America/Bogota"},
+            "BOM": {name: "Chhatrapati Shivaji International Airport", city: "Mumbai", country: "IN", lat: 19.089, lng: 72.868, tz: "Asia/Kolkata"},
+            "BUD": {name: "Budapest Ferenc Liszt International Airport", city: "Budapest", country: "HU", lat: 47.430, lng: 19.261, tz: "Europe/Budapest"},
+            "BWI": {name: "Baltimore/Washington International Airport", city: "Baltimore", country: "US", lat: 39.175, lng: -76.668, tz: "America/New_York"},
+            "CAI": {name: "Cairo International Airport", city: "Cairo", country: "EG", lat: 30.122, lng: 31.406, tz: "Africa/Cairo"},
+            "CAN": {name: "Guangzhou Baiyun International Airport", city: "Guangzhou", country: "CN", lat: 23.392, lng: 113.299, tz: "Asia/Shanghai"},
+            "CCU": {name: "Netaji Subhash Chandra Bose International Airport", city: "Kolkata", country: "IN", lat: 22.655, lng: 88.447, tz: "Asia/Kolkata"},
+            "CGK": {name: "Soekarno-Hatta International Airport", city: "Jakarta", country: "ID", lat: -6.126, lng: 106.656, tz: "Asia/Jakarta"},
+            "CHC": {name: "Christchurch International Airport", city: "Christchurch", country: "NZ", lat: -43.489, lng: 172.532, tz: "Pacific/Auckland"},
+            "CJU": {name: "Jeju International Airport", city: "Jeju", country: "KR", lat: 33.511, lng: 126.493, tz: "Asia/Seoul"},
+            "CLO": {name: "Alfonso Bonilla Aragon International Airport", city: "Cali", country: "CO", lat: 3.543, lng: -76.381, tz: "America/Bogota"},
+            "CMN": {name: "Mohammed V International Airport", city: "Casablanca", country: "MA", lat: 33.368, lng: -7.590, tz: "Africa/Casablanca"},
+            "CPH": {name: "Copenhagen Airport", city: "Copenhagen", country: "DK", lat: 55.618, lng: 12.656, tz: "Europe/Copenhagen"},
+            "CPT": {name: "Cape Town International Airport", city: "Cape Town", country: "ZA", lat: -33.965, lng: 18.602, tz: "Africa/Johannesburg"},
+            "CUN": {name: "Cancun International Airport", city: "Cancun", country: "MX", lat: 21.037, lng: -86.877, tz: "America/Cancun"},
+            "DAM": {name: "Damascus International Airport", city: "Damascus", country: "SY", lat: 33.411, lng: 36.516, tz: "Asia/Damascus"},
+            "DEL": {name: "Indira Gandhi International Airport", city: "Delhi", country: "IN", lat: 28.566, lng: 77.103, tz: "Asia/Kolkata"},
+            "DEN": {name: "Denver International Airport", city: "Denver", country: "US", lat: 39.862, lng: -104.673, tz: "America/Denver"},
+            "DOH": {name: "Hamad International Airport", city: "Doha", country: "QA", lat: 25.261, lng: 51.565, tz: "Asia/Qatar"},
+            "DTW": {name: "Detroit Metropolitan Wayne County Airport", city: "Detroit", country: "US", lat: 42.212, lng: -83.353, tz: "America/Detroit"},
+            "DUB": {name: "Dublin Airport", city: "Dublin", country: "IE", lat: 53.421, lng: -6.270, tz: "Europe/Dublin"},
+            "DUR": {name: "King Shaka International Airport", city: "Durban", country: "ZA", lat: -29.615, lng: 31.120, tz: "Africa/Johannesburg"},
+            "DUS": {name: "Dusseldorf Airport", city: "Dusseldorf", country: "DE", lat: 51.290, lng: 6.767, tz: "Europe/Berlin"},
+            "EDI": {name: "Edinburgh Airport", city: "Edinburgh", country: "GB", lat: 55.950, lng: -3.372, tz: "Europe/London"},
+            "EWR": {name: "Newark Liberty International Airport", city: "Newark", country: "US", lat: 40.692, lng: -74.169, tz: "America/New_York"},
+            "EZE": {name: "Ministro Pistarini International Airport", city: "Buenos Aires", country: "AR", lat: -34.822, lng: -58.536, tz: "America/Argentina/Buenos_Aires"},
+            "GIG": {name: "Rio de Janeiro-Galeão International Airport", city: "Rio de Janeiro", country: "BR", lat: -22.810, lng: -43.251, tz: "America/Sao_Paulo"},
+            "GLA": {name: "Glasgow Airport", city: "Glasgow", country: "GB", lat: 55.872, lng: -4.433, tz: "Europe/London"},
+            "GND": {name: "Maurice Bishop International Airport", city: "Grenada", country: "GD", lat: 12.004, lng: -61.786, tz: "America/Grenada"},
+            "GUA": {name: "La Aurora International Airport", city: "Guatemala City", country: "GT", lat: 14.583, lng: -90.527, tz: "America/Guatemala"},
+            "GUM": {name: "Antonio B. Won Pat International Airport", city: "Guam", country: "GU", lat: 13.484, lng: 144.796, tz: "Pacific/Guam"},
+            "GYE": {name: "José Joaquín de Olmedo International Airport", city: "Guayaquil", country: "EC", lat: -2.158, lng: -79.884, tz: "America/Guayaquil"},
+            "HAJ": {name: "Hannover Airport", city: "Hannover", country: "DE", lat: 52.461, lng: 9.685, tz: "Europe/Berlin"},
+            "HAM": {name: "Hamburg Airport", city: "Hamburg", country: "DE", lat: 53.630, lng: 9.988, tz: "Europe/Berlin"},
+            "HAN": {name: "Noi Bai International Airport", city: "Hanoi", country: "VN", lat: 21.221, lng: 105.807, tz: "Asia/Ho_Chi_Minh"},
+            "HEL": {name: "Helsinki-Vantaa Airport", city: "Helsinki", country: "FI", lat: 60.317, lng: 24.963, tz: "Europe/Helsinki"},
+            "HND": {name: "Tokyo Haneda Airport", city: "Tokyo", country: "JP", lat: 35.553, lng: 139.781, tz: "Asia/Tokyo"},
+            "HNL": {name: "Daniel K. Inouye International Airport", city: "Honolulu", country: "US", lat: 21.319, lng: -157.924, tz: "Pacific/Honolulu"},
+            "HRE": {name: "Robert Gabriel Mugabe International Airport", city: "Harare", country: "ZW", lat: -17.932, lng: 31.093, tz: "Africa/Harare"},
+            "IAD": {name: "Washington Dulles International Airport", city: "Washington DC", country: "US", lat: 38.953, lng: -77.457, tz: "America/New_York"},
+            "IND": {name: "Indianapolis International Airport", city: "Indianapolis", country: "US", lat: 39.717, lng: -86.294, tz: "America/Indiana/Indianapolis"},
+            "IST": {name: "Istanbul Airport", city: "Istanbul", country: "TR", lat: 41.275, lng: 28.752, tz: "Europe/Istanbul"},
+            "JAX": {name: "Jacksonville International Airport", city: "Jacksonville", country: "US", lat: 30.494, lng: -81.688, tz: "America/New_York"},
+            "JED": {name: "King Abdulaziz International Airport", city: "Jeddah", country: "SA", lat: 21.680, lng: 39.157, tz: "Asia/Riyadh"},
+            "KBL": {name: "Hamid Karzai International Airport", city: "Kabul", country: "AF", lat: 34.566, lng: 69.212, tz: "Asia/Kabul"},
+            "KHI": {name: "Jinnah International Airport", city: "Karachi", country: "PK", lat: 24.906, lng: 67.161, tz: "Asia/Karachi"},
+            "KIN": {name: "Norman Manley International Airport", city: "Kingston", country: "JM", lat: 17.936, lng: -76.788, tz: "America/Jamaica"},
+            "KIX": {name: "Kansai International Airport", city: "Osaka", country: "JP", lat: 34.435, lng: 135.244, tz: "Asia/Tokyo"},
+            "KUL": {name: "Kuala Lumpur International Airport", city: "Kuala Lumpur", country: "MY", lat: 2.746, lng: 101.710, tz: "Asia/Kuala_Lumpur"},
+            "KWI": {name: "Kuwait International Airport", city: "Kuwait City", country: "KW", lat: 29.227, lng: 47.969, tz: "Asia/Kuwait"},
+            "LAS": {name: "Harry Reid International Airport", city: "Las Vegas", country: "US", lat: 36.081, lng: -115.152, tz: "America/Los_Angeles"},
+            "LGW": {name: "London Gatwick Airport", city: "London", country: "GB", lat: 51.148, lng: -0.191, tz: "Europe/London"},
+            "LIM": {name: "Jorge Chávez International Airport", city: "Lima", country: "PE", lat: -12.022, lng: -77.114, tz: "America/Lima"},
+            "LIS": {name: "Lisbon Portela Airport", city: "Lisbon", country: "PT", lat: 38.774, lng: -9.134, tz: "Europe/Lisbon"},
+            "MCO": {name: "Orlando International Airport", city: "Orlando", country: "US", lat: 28.429, lng: -81.309, tz: "America/New_York"},
+            "MCT": {name: "Muscat International Airport", city: "Muscat", country: "OM", lat: 23.593, lng: 58.284, tz: "Asia/Muscat"},
+            "MDW": {name: "Chicago Midway International Airport", city: "Chicago", country: "US", lat: 41.786, lng: -87.752, tz: "America/Chicago"},
+            "MLA": {name: "Malta International Airport", city: "Malta", country: "MT", lat: 35.857, lng: 14.478, tz: "Europe/Malta"},
+            "MLE": {name: "Velana International Airport", city: "Male", country: "MV", lat: 4.192, lng: 73.529, tz: "Indian/Maldives"},
+            "MNL": {name: "Ninoy Aquino International Airport", city: "Manila", country: "PH", lat: 14.509, lng: 121.020, tz: "Asia/Manila"},
+            "MSP": {name: "Minneapolis-St Paul International Airport", city: "Minneapolis", country: "US", lat: 44.882, lng: -93.222, tz: "America/Chicago"},
+            "MUC": {name: "Munich Airport", city: "Munich", country: "DE", lat: 48.354, lng: 11.786, tz: "Europe/Berlin"},
+            "MVD": {name: "Carrasco International Airport", city: "Montevideo", country: "UY", lat: -34.838, lng: -56.031, tz: "America/Montevideo"},
+            "NAN": {name: "Nadi International Airport", city: "Nadi", country: "FJ", lat: -17.755, lng: 177.443, tz: "Pacific/Fiji"},
+            "PEK": {name: "Beijing Capital International Airport", city: "Beijing", country: "CN", lat: 40.080, lng: 116.585, tz: "Asia/Shanghai"},
+            "PVG": {name: "Shanghai Pudong International Airport", city: "Shanghai", country: "CN", lat: 31.144, lng: 121.805, tz: "Asia/Shanghai"},
+            "PTY": {name: "Tocumen International Airport", city: "Panama City", country: "PA", lat: 9.071, lng: -79.383, tz: "America/Panama"},
+            "UIO": {name: "Mariscal Sucre International Airport", city: "Quito", country: "EC", lat: -0.129, lng: -78.358, tz: "America/Guayaquil"},
+            "VIE": {name: "Vienna International Airport", city: "Vienna", country: "AT", lat: 48.110, lng: 16.570, tz: "Europe/Vienna"},
+            "WAW": {name: "Warsaw Chopin Airport", city: "Warsaw", country: "PL", lat: 52.166, lng: 20.967, tz: "Europe/Warsaw"},
+            "WLG": {name: "Wellington International Airport", city: "Wellington", country: "NZ", lat: -41.327, lng: 174.805, tz: "Pacific/Auckland"},
+            "YVR": {name: "Vancouver International Airport", city: "Vancouver", country: "CA", lat: 49.194, lng: -123.184, tz: "America/Vancouver"},
+            "ZRH": {name: "Zurich Airport", city: "Zurich", country: "CH", lat: 47.458, lng: 8.548, tz: "Europe/Zurich"}
         };
 
         // Airport lookup functionality
@@ -1035,14 +1126,14 @@
                 return;
             }
 
-            resultsDiv.innerHTML = '<div class="loading">🔍 Looking up airport information...</div>';
+            resultsDiv.innerHTML = '<div class="loading">🔍 Magicccccccc...</div>';
 
             try {
                 // Check if airport exists in embedded database
                 const airport = AIRPORTS_DB[airportCode];
                 
                 if (!airport) {
-                    resultsDiv.innerHTML = '<div class="error">Airport code not found in database. Currently supporting 20+ major international airports.</div>';
+                    resultsDiv.innerHTML = '<div class="error">Please find Kenny Wong!!!</div>';
                     return;
                 }
                 
@@ -1102,12 +1193,12 @@
                     <div class="option">
                         <div class="option-header">
                             <div class="option-title">${airport.name} (${airportCode})</div>
-                            <div class="option-badge badge-mtr">${airport.country_code}</div>
+                            <div class="option-badge badge-mtr">${airport.country}</div>
                         </div>
                         <div class="option-details">
                             <div class="time-row">
                                 <span class="time-label">🌍 Country:</span>
-                                <span class="time-value">${airport.country_code}</span>
+                                <span class="time-value">${airport.country}</span>
                             </div>
                             <div class="time-row">
                                 <span class="time-label">🏙️ City:</span>
@@ -1145,7 +1236,7 @@
                     <div class="error">
                         <strong>Error fetching airport data</strong><br>
                         <small>${error.message}</small><br>
-                        <small style="margin-top: 8px; display: block;">Currently supporting 69+ major international airports including JFK, LAX, LHR, HKG, NRT, CDG, DXB, SIN, ICN, SYD, TPE, BKK, CTU, SHA, BLR, MAA, DPS, and more.</small>
+                        <small style="margin-top: 8px; display: block;">Currently supporting 160+ major international airports worldwide including JFK, LAX, LHR, HKG, NRT, CDG, DXB, SIN, ICN, SYD, TPE, BKK, IST, DUB, AKL, ACC, ADD, and many more.</small>
                     </div>
                 `;
             }
