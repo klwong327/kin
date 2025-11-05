@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transit Time Calculator</title>
+    <style>
+        :root {
+            --color-cream-50: rgba(252, 252, 249, 1);
+            --color-cream-100: rgba(255, 255, 253, 1);
+            --color-gray-200: rgba(245, 245, 245, 1);
+            --color-gray-300: rgba(167, 169, 169, 1);
+            --color-slate-500: rgba(98, 108, 113, 1);
+            --color-brown-600: rgba(94, 82, 64, 1);
+            --color-charcoal-700: rgba(31, 33, 33, 1);
+            --color-charcoal-800: rgba(38, 40, 40, 1);
+            --color-slate-900: rgba(19, 52, 59, 1);
+            --color-teal-500: rgba(33, 128, 141, 1);
+            --color-teal-600: rgba(29, 116, 128, 1);
+            --color-teal-700: rgba(26, 104, 115, 1);
+            --color-red-500: rgba(192, 21, 47, 1);
+            --color-brown-600-rgb: 94, 82, 64;
+            --color-teal-500-rgb: 33, 128, 141;
+            --color-slate-900-rgb: 19, 52, 59;
+            --color-background: var(--color-cream-50);
+            --color-surface: var(--color-cream-100);
+            --color-text: var(--color-slate-900);
+            --color-text-secondary: var(--color-slate-500);
+            --color-primary: var(--color-teal-500);
+            --color-primary-hover: var(--color-teal-600);
+            --color-primary-active: var(--color-teal-700);
+            --color-border: rgba(var(--color-brown-600-rgb), 0.2);
+            --color-card-border: rgba(var(--color-brown-600-rgb), 0.12);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-background: var(--color-charcoal-700);
+                --color-surface: var(--color-charcoal-800);
+                --color-text: var(--color-gray-200);
+                --color-text-secondary: rgba(167, 169, 169, 0.7);
+                --color-primary: rgba(50, 184, 198, 1);
+                --color-primary-hover: rgba(45, 166, 178, 1);
+                --color-primary-active: rgba(41, 150, 161, 1);
+                --color-border: rgba(119, 124, 124, 0.3);
+                --color-card-border: rgba(119, 124, 124, 0.2);
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--color-surface);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: var(--color-text);
+        }
+
+        .setup-warning {
+            background: rgba(255, 200, 87, 0.15);
+            border: 1px solid rgba(255, 200, 87, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+
+        .setup-warning h3 {
+            color: #d97706;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--color-text);
+            font-size: 14px;
+        }
+
+        select, input[type="time"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input[type="time"]:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .advance-time-group {
+            margin-bottom: 20px;
+        }
+
+        .advance-time-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .advance-btn {
+            padding: 12px;
+            border: 2px solid var(--color-border);
+            border-radius: 8px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .advance-btn:hover {
+            border-color: var(--color-primary);
+            background: rgba(var(--color-teal-500-rgb), 0.1);
+        }
+
+        .advance-btn.selected {
+            border-color: var(--color-primary);
+            background: var(--color-primary);
+            color: white;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .btn:active {
+            background: var(--color-primary-active);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .results {
+            margin-top: 24px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--color-text-secondary);
+        }
+
+        .option {
+            background: var(--color-surface);
+            border: 1px solid var(--color-card-border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .option-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .option-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .option-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-mtr {
+            background: rgba(33, 128, 141, 0.15);
+            color: var(--color-primary);
+        }
+
+        .badge-bus {
+            background: rgba(245, 158, 11, 0.15);
+            color: #d97706;
+        }
+
+        .option-details {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            line-height: 1.8;
+        }
+
+        .time-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+        }
+
+        .time-label {
+            font-weight: 500;
+        }
+
+        .time-value {
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .error {
+            background: rgba(192, 21, 47, 0.1);
+            border: 1px solid rgba(192, 21, 47, 0.3);
+            color: var(--color-red-500);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .steps {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--color-card-border);
+        }
+
+        .step {
+            padding: 8px 0;
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚌 Transit Time Calculator</h1>
+
+        <div class="setup-warning">
+            <h3>⚠️ Setup Required</h3>
+            <p>You need to add your Google Maps API key in the code. Get one at: <a href="https://console.cloud.google.com/google/maps-apis" target="_blank">Google Maps Platform</a>. Enable the "Directions API" in your Google Cloud Console.</p>
+        </div>
+
+        <div class="form-group">
+            <label>Select Workplace</label>
+            <select id="workplace">
+                <option value="cxcity">1️⃣ CX City</option>
+                <option value="airport">2️⃣ Airport</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Report Duty Time ✈️</label>
+            <input type="time" id="dutyTime" value="11:00">
+            <small style="color: var(--color-text-secondary); display: block; margin-top: 4px;">What time do you need to report for duty?</small>
+        </div>
+
+        <div class="advance-time-group">
+            <label>Advance Time Choose</label>
+            <div class="advance-time-buttons">
+                <button class="advance-btn" data-minutes="15">15 mins</button>
+                <button class="advance-btn" data-minutes="20">20 mins</button>
+                <button class="advance-btn" data-minutes="25">25 mins</button>
+                <button class="advance-btn selected" data-minutes="30">30 mins</button>
+                <button class="advance-btn" data-minutes="35">35 mins</button>
+                <button class="advance-btn" data-minutes="40">40 mins</button>
+            </div>
+            <small style="color: var(--color-text-secondary); display: block; margin-top: 8px;">How early should you arrive before duty time?</small>
+        </div>
+
+        <button class="btn" onclick="calculateTransit()">Calculate When to Leave</button>
+
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        // Hardcoded home location (hidden from user)
+        const HOME_LOCATION = {lat: 22.316910, lng: 114.163717};
+
+        // Workplace locations
+        const WORKPLACES = {
+            cxcity: {lat: 22.298189, lng: 113.934747, name: 'CX City'},
+            airport: {lat: 22.316076, lng: 113.936037, name: 'Airport'}
+        };
+
+        // Your Google Maps API key
+        const API_KEY = 'AIzaSyBD5iVr11BID7B1477W8W2tlfi0O0ac1KQ';
+
+        let selectedAdvanceMinutes = 30; // Default
+
+        // Handle advance time button selection
+        document.querySelectorAll('.advance-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.advance-btn').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedAdvanceMinutes = parseInt(this.dataset.minutes);
+            });
+        });
+
+        async function calculateTransit() {
+            const workplace = document.getElementById('workplace').value;
+            const dutyTime = document.getElementById('dutyTime').value;
+            const resultsDiv = document.getElementById('results');
+
+            if (!dutyTime) {
+                resultsDiv.innerHTML = '<div class="error">Please enter a duty time.</div>';
+                return;
+            }
+
+            if (API_KEY === 'YOUR_API_KEY_HERE') {
+                resultsDiv.innerHTML = '<div class="error">Please add your Google Maps API key in the code.</div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="loading">⏳ Calculating transit routes...</div>';
+
+            try {
+                // Calculate target arrival time (duty time minus advance time)
+                const targetArrivalTime = calculateTargetArrivalTime(dutyTime, selectedAdvanceMinutes);
+                
+                const destination = WORKPLACES[workplace];
+
+                // Get two transit options based on workplace
+                let options;
+                if (workplace === 'cxcity') {
+                    options = await getCXCityOptions(targetArrivalTime, destination);
+                } else {
+                    options = await getAirportOptions(targetArrivalTime, destination);
+                }
+
+                displayResults(options, dutyTime, selectedAdvanceMinutes);
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        function calculateTargetArrivalTime(dutyTime, advanceMinutes) {
+            const [hours, minutes] = dutyTime.split(':').map(Number);
+            const dutyDate = new Date();
+            dutyDate.setHours(hours, minutes, 0, 0);
+            
+            // Subtract advance time
+            const targetDate = new Date(dutyDate.getTime() - advanceMinutes * 60000);
+            
+            return targetDate;
+        }
+
+        async function getCXCityOptions(arrivalTime, destination) {
+            // Option 1: MTR to Tung Chung + Transit Bus
+            const mtrOption = await getDirections(
+                HOME_LOCATION,
+                destination,
+                arrivalTime,
+                'TRANSIT',
+                ['BUS', 'RAIL', 'SUBWAY']
+            );
+
+            // Option 2: Direct bus (no MTR)
+            const busOption = await getDirections(
+                HOME_LOCATION,
+                destination,
+                arrivalTime,
+                'TRANSIT',
+                ['BUS']
+            );
+
+            return [
+                { ...mtrOption, title: 'Option 1: MTR + Bus', badge: 'mtr' },
+                { ...busOption, title: 'Option 2: Direct Bus', badge: 'bus' }
+            ];
+        }
+
+        async function getAirportOptions(arrivalTime, destination) {
+            // Option 1: MTR to Tung Chung + Transit Bus
+            const mtrOption = await getDirections(
+                HOME_LOCATION,
+                destination,
+                arrivalTime,
+                'TRANSIT',
+                ['BUS', 'RAIL', 'SUBWAY']
+            );
+
+            // Option 2: Direct Airport Bus (A or E series preferred)
+            const busOption = await getDirections(
+                HOME_LOCATION,
+                destination,
+                arrivalTime,
+                'TRANSIT',
+                ['BUS']
+            );
+
+            return [
+                { ...mtrOption, title: 'Option 1: MTR + Bus', badge: 'mtr' },
+                { ...busOption, title: 'Option 2: Airport Bus', badge: 'bus' }
+            ];
+        }
+
+        async function getDirections(origin, destination, arrivalTime, mode, transitModes) {
+            const url = new URL('https://maps.googleapis.com/maps/api/directions/json');
+            
+            url.searchParams.append('origin', `${origin.lat},${origin.lng}`);
+            url.searchParams.append('destination', `${destination.lat},${destination.lng}`);
+            url.searchParams.append('mode', mode);
+            url.searchParams.append('arrival_time', Math.floor(arrivalTime.getTime() / 1000));
+            url.searchParams.append('transit_mode', transitModes.join('|'));
+            url.searchParams.append('alternatives', 'true');
+            url.searchParams.append('key', API_KEY);
+
+            // Use CORS proxy for browser-based requests
+            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url.toString());
+
+            const response = await fetch(proxyUrl);
+            const data = await response.json();
+
+            if (data.status !== 'OK' || !data.routes || data.routes.length === 0) {
+                throw new Error('No routes found');
+            }
+
+            const route = data.routes[0];
+            const leg = route.legs[0];
+
+            return {
+                duration: leg.duration.text,
+                departureTime: leg.departure_time.text,
+                arrivalTime: leg.arrival_time.text,
+                steps: leg.steps.map(step => ({
+                    instruction: step.html_instructions.replace(/<[^>]*>/g, ''),
+                    mode: step.travel_mode,
+                    transitDetails: step.transit_details
+                }))
+            };
+        }
+
+        function displayResults(options, dutyTime, advanceMinutes) {
+            const resultsDiv = document.getElementById('results');
+            
+            let html = '<h2 style="margin-bottom: 16px;">Transit Options</h2>';
+            html += `<p style="color: var(--color-text-secondary); margin-bottom: 16px;">Report duty at ${dutyTime}, arriving ${advanceMinutes} mins early</p>`;
+
+            options.forEach(option => {
+                html += `
+                    <div class="option">
+                        <div class="option-header">
+                            <div class="option-title">${option.title}</div>
+                            <div class="option-badge badge-${option.badge}">${option.duration}</div>
+                        </div>
+                        <div class="option-details">
+                            <div class="time-row">
+                                <span class="time-label">🏠 Leave Home:</span>
+                                <span class="time-value">${option.departureTime}</span>
+                            </div>
+                            <div class="time-row">
+                                <span class="time-label">🏢 Arrive Company:</span>
+                                <span class="time-value">${option.arrivalTime}</span>
+                            </div>
+                        </div>
+                        <div class="steps">
+                            ${option.steps.map(step => {
+                                let stepText = step.instruction;
+                                if (step.transitDetails) {
+                                    const transit = step.transitDetails;
+                                    stepText = `${transit.line.vehicle.name || 'Transit'}: ${transit.line.short_name || transit.line.name || ''} to ${transit.headsign || ''}`;
+                                }
+                                return `<div class="step">• ${stepText}</div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            resultsDiv.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
