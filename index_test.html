@@ -273,6 +273,11 @@
     <div class="container">
         <h1>🚌 Transit Time Calculator</h1>
 
+        <div class="setup-warning">
+            <h3>⚠️ Setup Required</h3>
+            <p>You need to add your Google Maps API key in the code. Get one at: <a href="https://console.cloud.google.com/google/maps-apis" target="_blank">Google Maps Platform</a>. Enable the "Directions API" in your Google Cloud Console.</p>
+        </div>
+
         <div class="form-group">
             <label>Select Workplace</label>
             <select id="workplace">
@@ -476,15 +481,14 @@
             const options = [];
 
             try {
-                // Option 1: MTR to Olympic → Airport Express from Tsing Yi to Airport
-                const aelOption = await getMultiLegRoute(
+                // Option 1: Home → Olympic (Walk/MTR) → Tsing Yi (MTR) → Airport (AEL)
+                // Break into segments since Google doesn't recognize full 3-leg transit well
+                const aelOption = await getAirportExpressRoute(
                     HOME_LOCATION,
                     olympicStation,
                     tsingYiStation,
                     destination,
-                    arrivalTime,
-                    ['SUBWAY', 'RAIL'],
-                    ['RAIL']
+                    arrivalTime
                 );
                 if (aelOption) {
                     options.push({ 
@@ -560,6 +564,85 @@
 
             // Return up to 4 options
             return options.slice(0, 4);
+        }
+
+        async function getAirportExpressRoute(origin, olympicStation, tsingYiStation, destination, arrivalTime) {
+            const directionsService = new google.maps.DirectionsService();
+            
+            // Simplified approach: Home → Tsing Yi → Airport
+            // This better matches actual travel patterns (MTR to Tsing Yi, then AEL)
+            
+            // Step 1: Get Airport Express timing from Tsing Yi to Airport
+            const aelRequest = {
+                origin: new google.maps.LatLng(tsingYiStation.lat, tsingYiStation.lng),
+                destination: new google.maps.LatLng(destination.lat, destination.lng),
+                travelMode: google.maps.TravelMode.TRANSIT,
+                transitOptions: {
+                    modes: [google.maps.TransitMode.RAIL],
+                    arrivalTime: arrivalTime
+                }
+            };
+
+            const aelResult = await new Promise((resolve, reject) => {
+                directionsService.route(aelRequest, (result, status) => {
+                    if (status !== google.maps.DirectionsStatus.OK) {
+                        reject(new Error(`Airport Express route failed: ${status}`));
+                        return;
+                    }
+                    resolve(result);
+                });
+            });
+
+            const aelLeg = aelResult.routes[0].legs[0];
+            const tsingYiDepartureTime = new Date(arrivalTime.getTime() - aelLeg.duration.value * 1000);
+
+            // Step 2: Get MTR from home area to Tsing Yi (via Olympic if needed)
+            const mtrRequest = {
+                origin: new google.maps.LatLng(origin.lat, origin.lng),
+                destination: new google.maps.LatLng(tsingYiStation.lat, tsingYiStation.lng),
+                travelMode: google.maps.TravelMode.TRANSIT,
+                transitOptions: {
+                    modes: [google.maps.TransitMode.SUBWAY, google.maps.TransitMode.RAIL],
+                    arrivalTime: tsingYiDepartureTime
+                }
+            };
+
+            const mtrResult = await new Promise((resolve, reject) => {
+                directionsService.route(mtrRequest, (result, status) => {
+                    if (status !== google.maps.DirectionsStatus.OK) {
+                        reject(new Error(`MTR to Tsing Yi route failed: ${status}`));
+                        return;
+                    }
+                    resolve(result);
+                });
+            });
+
+            const mtrLeg = mtrResult.routes[0].legs[0];
+
+            // Calculate total duration
+            const totalDurationSeconds = mtrLeg.duration.value + aelLeg.duration.value;
+            const totalDurationText = Math.floor(totalDurationSeconds / 60) + ' mins';
+
+            // Combine steps
+            const allSteps = [
+                ...mtrLeg.steps.map(step => ({
+                    instruction: step.instructions.replace(/<[^>]*>/g, ''),
+                    mode: step.travel_mode,
+                    transitDetails: step.transit
+                })),
+                ...aelLeg.steps.map(step => ({
+                    instruction: step.instructions.replace(/<[^>]*>/g, ''),
+                    mode: step.travel_mode,
+                    transitDetails: step.transit
+                }))
+            ];
+
+            return {
+                duration: totalDurationText,
+                departureTime: mtrLeg.departure_time.text,
+                arrivalTime: aelLeg.arrival_time.text,
+                steps: allSteps
+            };
         }
 
         async function getDirections(origin, destination, arrivalTime, mode, transitModes, directOnly = false) {
