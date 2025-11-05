@@ -273,11 +273,6 @@
     <div class="container">
         <h1>🚌 Transit Time Calculator</h1>
 
-        <div class="setup-warning">
-            <h3>⚠️ Setup Required</h3>
-            <p>You need to add your Google Maps API key in the code. Get one at: <a href="https://console.cloud.google.com/google/maps-apis" target="_blank">Google Maps Platform</a>. Enable the "Directions API" in your Google Cloud Console.</p>
-        </div>
-
         <div class="form-group">
             <label>Select Workplace</label>
             <select id="workplace">
@@ -393,9 +388,9 @@
                 const mtrToBusOption = await getMultiLegRoute(
                     HOME_LOCATION,
                     tungChungBusTerminus,
+                    null,
                     destination,
                     arrivalTime,
-                    'TRANSIT',
                     ['RAIL', 'SUBWAY'],
                     ['BUS']
                 );
@@ -476,28 +471,95 @@
         }
 
         async function getAirportOptions(arrivalTime, destination) {
-            // Option 1: MTR to Tung Chung + Transit Bus
-            const mtrOption = await getDirections(
-                HOME_LOCATION,
-                destination,
-                arrivalTime,
-                'TRANSIT',
-                ['BUS', 'RAIL', 'SUBWAY']
-            );
+            const olympicStation = {lat: 22.318100, lng: 114.159800};
+            const tsingYiStation = {lat: 22.357400, lng: 114.108600};
+            const options = [];
 
-            // Option 2: Direct Airport Bus (A or E series preferred)
-            const busOption = await getDirections(
-                HOME_LOCATION,
-                destination,
-                arrivalTime,
-                'TRANSIT',
-                ['BUS']
-            );
+            try {
+                // Option 1: MTR to Olympic → Airport Express from Tsing Yi to Airport
+                const aelOption = await getMultiLegRoute(
+                    HOME_LOCATION,
+                    olympicStation,
+                    tsingYiStation,
+                    destination,
+                    arrivalTime,
+                    ['SUBWAY', 'RAIL'],
+                    ['RAIL']
+                );
+                if (aelOption) {
+                    options.push({ 
+                        ...aelOption, 
+                        title: 'Option 1: MTR → Olympic → AEL from Tsing Yi', 
+                        badge: 'mtr' 
+                    });
+                }
+            } catch (e) {
+                console.error('AEL option failed:', e);
+            }
 
-            return [
-                { ...mtrOption, title: 'Option 1: MTR + Bus', badge: 'mtr' },
-                { ...busOption, title: 'Option 2: Airport Bus', badge: 'bus' }
-            ];
+            try {
+                // Option 2: Direct E or A bus from home (no transfers)
+                const directBusOption = await getDirections(
+                    HOME_LOCATION,
+                    destination,
+                    arrivalTime,
+                    'TRANSIT',
+                    ['BUS'],
+                    true // direct route only
+                );
+                if (directBusOption) {
+                    options.push({ 
+                        ...directBusOption, 
+                        title: 'Option 2: Direct E/A Bus from Home', 
+                        badge: 'bus' 
+                    });
+                }
+            } catch (e) {
+                console.error('Direct bus option failed:', e);
+            }
+
+            try {
+                // Option 3: Alternative MTR + Bus route
+                const altMTROption = await getDirections(
+                    HOME_LOCATION,
+                    destination,
+                    arrivalTime,
+                    'TRANSIT',
+                    ['BUS', 'RAIL', 'SUBWAY']
+                );
+                if (altMTROption && options.length < 4) {
+                    options.push({ 
+                        ...altMTROption, 
+                        title: 'Option 3: MTR + Transit Bus', 
+                        badge: 'mtr' 
+                    });
+                }
+            } catch (e) {
+                console.error('Alternative MTR option failed:', e);
+            }
+
+            try {
+                // Option 4: Any other bus route
+                const altBusOption = await getDirections(
+                    HOME_LOCATION,
+                    destination,
+                    arrivalTime,
+                    'TRANSIT',
+                    ['BUS']
+                );
+                if (altBusOption && options.length < 4) {
+                    options.push({ 
+                        ...altBusOption, 
+                        title: 'Option 4: Alternative Bus Route', 
+                        badge: 'bus' 
+                    });
+                }
+            } catch (e) {
+                console.error('Alternative bus option failed:', e);
+            }
+
+            // Return up to 4 options
+            return options.slice(0, 4);
         }
 
         async function getDirections(origin, destination, arrivalTime, mode, transitModes, directOnly = false) {
@@ -551,13 +613,125 @@
             });
         }
 
-        async function getMultiLegRoute(origin, waypoint, destination, arrivalTime, mode1, transitModes1, transitModes2) {
+        async function getMultiLegRoute(origin, waypoint1, waypoint2, destination, arrivalTime, transitModes1, transitModes2) {
             const directionsService = new google.maps.DirectionsService();
+            
+            // If waypoint2 exists, this is a 3-leg journey (Home → Waypoint1 → Waypoint2 → Destination)
+            // Otherwise, it's a 2-leg journey (Home → Waypoint → Destination)
+            const isThreeLeg = waypoint2 !== undefined && waypoint2 !== null;
+            
+            if (isThreeLeg) {
+                // Three-leg route: Home → Olympic → Tsing Yi → Airport
+                
+                // Leg 3: Tsing Yi to Airport (we know arrival time)
+                const leg3Request = {
+                    origin: new google.maps.LatLng(waypoint2.lat, waypoint2.lng),
+                    destination: new google.maps.LatLng(destination.lat, destination.lng),
+                    travelMode: google.maps.TravelMode.TRANSIT,
+                    transitOptions: {
+                        modes: transitModes2.map(m => google.maps.TransitMode[m]),
+                        arrivalTime: arrivalTime
+                    }
+                };
+
+                const leg3Result = await new Promise((resolve, reject) => {
+                    directionsService.route(leg3Request, (result, status) => {
+                        if (status !== google.maps.DirectionsStatus.OK) {
+                            reject(new Error(`Leg 3 failed: ${status}`));
+                            return;
+                        }
+                        resolve(result);
+                    });
+                });
+
+                const leg3 = leg3Result.routes[0].legs[0];
+                const waypoint2DepartureTime = new Date(arrivalTime.getTime() - leg3.duration.value * 1000);
+
+                // Leg 2: Olympic to Tsing Yi
+                const leg2Request = {
+                    origin: new google.maps.LatLng(waypoint1.lat, waypoint1.lng),
+                    destination: new google.maps.LatLng(waypoint2.lat, waypoint2.lng),
+                    travelMode: google.maps.TravelMode.TRANSIT,
+                    transitOptions: {
+                        modes: transitModes1.map(m => google.maps.TransitMode[m]),
+                        arrivalTime: waypoint2DepartureTime
+                    }
+                };
+
+                const leg2Result = await new Promise((resolve, reject) => {
+                    directionsService.route(leg2Request, (result, status) => {
+                        if (status !== google.maps.DirectionsStatus.OK) {
+                            reject(new Error(`Leg 2 failed: ${status}`));
+                            return;
+                        }
+                        resolve(result);
+                    });
+                });
+
+                const leg2 = leg2Result.routes[0].legs[0];
+                const waypoint1DepartureTime = new Date(waypoint2DepartureTime.getTime() - leg2.duration.value * 1000);
+
+                // Leg 1: Home to Olympic
+                const leg1Request = {
+                    origin: new google.maps.LatLng(origin.lat, origin.lng),
+                    destination: new google.maps.LatLng(waypoint1.lat, waypoint1.lng),
+                    travelMode: google.maps.TravelMode.TRANSIT,
+                    transitOptions: {
+                        modes: transitModes1.map(m => google.maps.TransitMode[m]),
+                        arrivalTime: waypoint1DepartureTime
+                    }
+                };
+
+                const leg1Result = await new Promise((resolve, reject) => {
+                    directionsService.route(leg1Request, (result, status) => {
+                        if (status !== google.maps.DirectionsStatus.OK) {
+                            reject(new Error(`Leg 1 failed: ${status}`));
+                            return;
+                        }
+                        resolve(result);
+                    });
+                });
+
+                const leg1 = leg1Result.routes[0].legs[0];
+
+                // Calculate total duration
+                const totalDurationSeconds = leg1.duration.value + leg2.duration.value + leg3.duration.value;
+                const totalDurationText = Math.floor(totalDurationSeconds / 60) + ' mins';
+
+                // Combine steps
+                const allSteps = [
+                    ...leg1.steps.map(step => ({
+                        instruction: step.instructions.replace(/<[^>]*>/g, ''),
+                        mode: step.travel_mode,
+                        transitDetails: step.transit
+                    })),
+                    ...leg2.steps.map(step => ({
+                        instruction: step.instructions.replace(/<[^>]*>/g, ''),
+                        mode: step.travel_mode,
+                        transitDetails: step.transit
+                    })),
+                    ...leg3.steps.map(step => ({
+                        instruction: step.instructions.replace(/<[^>]*>/g, ''),
+                        mode: step.travel_mode,
+                        transitDetails: step.transit
+                    }))
+                ];
+
+                return {
+                    duration: totalDurationText,
+                    departureTime: leg1.departure_time.text,
+                    arrivalTime: leg3.arrival_time.text,
+                    steps: allSteps
+                };
+            }
+            
+            // Two-leg route (original logic for CX City)
+            const finalDestination = destination || waypoint2;
             
             // Get route from waypoint to destination first (we know arrival time)
             const leg2Request = {
-                origin: new google.maps.LatLng(waypoint.lat, waypoint.lng),
-                destination: new google.maps.LatLng(destination.lat, destination.lng),
+                origin: new google.maps.LatLng(waypoint1.lat, waypoint1.lng),
+                destination: new google.maps.LatLng(finalDestination.lat, finalDestination.lng),
                 travelMode: google.maps.TravelMode.TRANSIT,
                 transitOptions: {
                     modes: transitModes2.map(m => google.maps.TransitMode[m]),
@@ -583,7 +757,7 @@
             // Get route from origin to waypoint (arriving at waypoint departure time)
             const leg1Request = {
                 origin: new google.maps.LatLng(origin.lat, origin.lng),
-                destination: new google.maps.LatLng(waypoint.lat, waypoint.lng),
+                destination: new google.maps.LatLng(waypoint1.lat, waypoint1.lng),
                 travelMode: google.maps.TravelMode.TRANSIT,
                 transitOptions: {
                     modes: transitModes1.map(m => google.maps.TransitMode[m]),
