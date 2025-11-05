@@ -385,14 +385,14 @@
         }
 
         async function getCXCityOptions(arrivalTime, destination) {
-            const tungChungMTR = {lat: 22.2892471, lng: 113.941213};
+            const tungChungBusTerminus = {lat: 22.289547245983123, lng: 113.94052342186916};
             const options = [];
 
             try {
-                // Option 1: MTR to Tung Chung + S/E bus from Tung Chung MTR
+                // Option 1: MTR to Tung Chung + S/E bus from Tung Chung Station Bus Terminus
                 const mtrToBusOption = await getMultiLegRoute(
                     HOME_LOCATION,
-                    tungChungMTR,
+                    tungChungBusTerminus,
                     destination,
                     arrivalTime,
                     'TRANSIT',
